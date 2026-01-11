@@ -9,13 +9,13 @@ Shared Claude Code skills for the Entourage team. This repository is a Claude Co
 Run Claude Code with the plugin directory:
 
 ```bash
-claude --plugin-dir ~/entourage-agent-skills
+claude --plugin-dir ~/entourage-plugin
 ```
 
 Add an alias to your shell config (`~/.zshrc` or `~/.bashrc`) for convenience:
 
 ```bash
-alias claude-entourage='claude --plugin-dir ~/entourage-agent-skills'
+alias claude-entourage='claude --plugin-dir ~/entourage-plugin'
 ```
 
 ### Option B: Project-Level Installation
@@ -24,7 +24,7 @@ Install the plugin for a specific project:
 
 ```bash
 cd /path/to/your/project
-claude plugin install entourage-skills --source ~/entourage-agent-skills --scope project
+claude plugin install entourage-skills --source ~/entourage-plugin --scope project
 ```
 
 This adds the plugin to `.claude/settings.json`, which can be committed to share with your team.
@@ -39,7 +39,7 @@ This adds the plugin to `.claude/settings.json`, which can be committed to share
 ## Keeping Skills Updated
 
 ```bash
-cd ~/entourage-agent-skills && git pull
+cd ~/entourage-plugin && git pull
 ```
 
 Then restart Claude Code to pick up the changes.
@@ -76,7 +76,7 @@ Then restart Claude Code to pick up the changes.
 ## Plugin Structure
 
 ```
-entourage-agent-skills/
+entourage-plugin/
 ├── .claude-plugin/
 │   └── plugin.json          # Plugin manifest
 ├── skills/
@@ -96,7 +96,7 @@ entourage-agent-skills/
 
 **Testing changes locally:**
 ```bash
-claude --plugin-dir ~/entourage-agent-skills
+claude --plugin-dir ~/entourage-plugin
 ```
 
 Type `/grounded-query` to verify the skill appears in autocomplete.
