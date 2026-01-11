@@ -1,25 +1,33 @@
 # entourage-plugin
 
-Shared Claude Code skills for the my-entourage organization. Skills are reusable prompt templates that can be invoked with `/skill-name` in Claude Code.
+Shared Claude Code skills for the Entourage team. This repository is a Claude Code **plugin** containing reusable skills that can be invoked with `/skill-name`.
 
-## Setup
+## Installation
 
-1. Clone this repository to your local machine:
-   ```bash
-   git clone git@github.com:my-entourage/entourage-agent-skills.git
-   ```
+### Option A: Local Plugin (Recommended for Development)
 
-2. Add the path to your `~/.claude.json` configuration:
-   ```json
-   {
-     "skillsSearchPaths": [
-       "/path/to/entourage-agent-skills/.claude/skills"
-     ]
-   }
-   ```
-   Replace `/path/to` with the actual path to where you cloned this repository.
+Run Claude Code with the plugin directory:
 
-3. Skills will now be available in all your Claude Code sessions.
+```bash
+claude --plugin-dir ~/entourage-agent-skills
+```
+
+Add an alias to your shell config (`~/.zshrc` or `~/.bashrc`) for convenience:
+
+```bash
+alias claude-entourage='claude --plugin-dir ~/entourage-agent-skills'
+```
+
+### Option B: Project-Level Installation
+
+Install the plugin for a specific project:
+
+```bash
+cd /path/to/your/project
+claude plugin install entourage-skills --source ~/entourage-agent-skills --scope project
+```
+
+This adds the plugin to `.claude/settings.json`, which can be committed to share with your team.
 
 ## Available Skills
 
@@ -28,24 +36,67 @@ Shared Claude Code skills for the my-entourage organization. Skills are reusable
 | Grounded Query | `/grounded-query` | Verify claims against source documents |
 | Project Status | `/project-status` | Report implementation status with evidence |
 
+## Keeping Skills Updated
+
+```bash
+cd ~/entourage-agent-skills && git pull
+```
+
+Then restart Claude Code to pick up the changes.
+
 ## Adding New Skills
 
-1. Create a new `.md` file in `.claude/skills/`
-2. Include frontmatter with `name`, `description`, and `user_invocable`:
+1. Create a **subdirectory** in `skills/` with your skill name:
+   ```bash
+   mkdir skills/my-skill
+   ```
+
+2. Create a file named exactly `SKILL.md` (case-sensitive) inside the directory:
+   ```bash
+   touch skills/my-skill/SKILL.md
+   ```
+
+3. Add frontmatter with `name` and `description`:
    ```markdown
    ---
    name: my-skill
-   description: Brief description shown in skill listings
-   user_invocable: true
+   description: Brief description shown in skill listings. Claude uses this to decide when to apply the skill.
    ---
 
    # My Skill
 
    Instructions for Claude when this skill is invoked...
    ```
-3. Commit and push to main
-4. Team members run `git pull` to get the new skill
 
-## Keeping Skills Updated
+4. Commit and push to main
+5. Team members run `git pull` and restart Claude Code
 
-Skills are **not** automatically synced. Team members should periodically run `git pull` to get the latest updates.
+**Important:** The directory name should match the `name` field in frontmatter. The file **must** be named `SKILL.md`.
+
+## Plugin Structure
+
+```
+entourage-agent-skills/
+├── .claude-plugin/
+│   └── plugin.json          # Plugin manifest
+├── skills/
+│   ├── grounded-query/
+│   │   └── SKILL.md
+│   └── project-status/
+│       └── SKILL.md
+└── README.md
+```
+
+## Troubleshooting
+
+**Skills not appearing?**
+- Ensure you're running Claude with `--plugin-dir` flag
+- Restart Claude Code after changes
+- Check that SKILL.md files have valid YAML frontmatter
+
+**Testing changes locally:**
+```bash
+claude --plugin-dir ~/entourage-agent-skills
+```
+
+Type `/grounded-query` to verify the skill appears in autocomplete.
