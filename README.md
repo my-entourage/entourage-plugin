@@ -1,4 +1,4 @@
-# entourage-agent-skills
+# entourage-plugin
 
 Shared Claude Code skills for the my-entourage organization. Skills are reusable prompt templates that can be invoked with `/skill-name` in Claude Code.
 
