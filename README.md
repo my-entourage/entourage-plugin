@@ -36,6 +36,46 @@ This adds the plugin to `.claude/settings.json`, which can be committed to share
 | Grounded Query | `/grounded-query` | Verify claims against source documents |
 | Project Status | `/project-status` | Report implementation status with evidence |
 
+## Repository Configuration (Optional)
+
+The `/project-status` skill can verify implementation status by scanning local git repositories. To enable this:
+
+1. Create a `.entourage/` directory in your working project (where you run Claude Code)
+
+2. Create `.entourage/repos.json` with paths to your code repositories:
+
+```json
+{
+  "repos": [
+    {
+      "name": "entourage-web",
+      "path": "~/Documents/code/entourage-web",
+      "mainBranch": "main"
+    },
+    {
+      "name": "entourage-api",
+      "path": "~/Documents/code/entourage-api"
+    }
+  ]
+}
+```
+
+**Configuration fields:**
+- `name` (required): Display name for the repository
+- `path` (required): Local filesystem path (supports `~` for home directory)
+- `mainBranch` (optional): Primary branch name, defaults to "main"
+
+**What it does:**
+- Searches repositories for files matching component names
+- Detects test files to verify implementation completeness
+- Checks git history for recent commits and feature branches
+- Upgrades status from "Discussed" to "In Progress" or "Complete" based on code evidence
+
+**Without configuration:**
+The skill still works but limits status to "Discussed" or "Planned" (transcript evidence only).
+
+See `examples/repos.json.example` for a template.
+
 ## Keeping Skills Updated
 
 ```bash

@@ -1,0 +1,14 @@
+{
+  "repos": [
+    {
+      "name": "my-web-app",
+      "path": "~/Documents/code/my-web-app",
+      "mainBranch": "main"
+    },
+    {
+      "name": "my-api",
+      "path": "~/Documents/code/my-api",
+      "mainBranch": "main"
+    }
+  ]
+}

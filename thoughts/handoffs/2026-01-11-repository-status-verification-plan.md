@@ -1,7 +1,8 @@
-# Repository Status Verification Plan (Deferred)
+# Repository Status Verification Plan
 
-**Status:** Deferred - Focus first on grounded-query and project-status skills
+**Status:** Stage 1 Implemented (Local Repository Scanning)
 **Date:** 2026-01-11
+**Updated:** 2026-01-11
 
 ## Context
 
@@ -9,7 +10,7 @@ This plan documents the broader approach for verifying project status by cross-r
 1. Meeting transcripts (what was discussed/planned)
 2. Code repositories (what was actually implemented)
 
-This is deferred in favor of first building the `grounded-query` and `project-status` skills that work on data files only.
+Stage 1 (local repository scanning) has been implemented. Stage 2 (GitHub API) is deferred to future work.
 
 ---
 
@@ -23,57 +24,28 @@ When querying about project status, Claude can mark components as "Complete" bas
 
 ### Option 1: Local Repository Scanning (Claude Code Native)
 
-**How it works:** Scan local git repositories that the user points to, analyzing:
+Scan local git repositories that the user points to, analyzing:
 - File structure (do expected files exist?)
 - Git history (recent commits, branches)
 - Code content (implementations, tests, migrations)
 - CI/CD status (if accessible)
 
-**Pros:**
-- No external API dependencies
-- Works offline
-- Full access to all repo content
-- Privacy-preserving (nothing leaves machine)
-- Immediate prototype viability
-
-**Cons:**
-- Requires user to have repos cloned locally
-- Can't check remote-only repos
-- No access to GitHub Issues/PRs/Actions without API
-
 ---
 
 ### Option 2: GitHub API Integration
 
-**How it works:** Use GitHub's REST or GraphQL API to:
+Use GitHub's REST or GraphQL API to:
 - List repositories in an org
 - Check recent commits, PRs, issues
 - Read file contents
 - Check GitHub Actions status
 
-**Pros:**
-- Access to remote repos without local clones
-- Rich metadata (issues, PRs, discussions, Actions)
-- Can track cross-repo dependencies
-
-**Cons:**
-- Requires authentication (PAT or OAuth)
-- Rate limits
-- Privacy/security considerations for marketplace distribution
-- More complex setup for end users
-
 ---
 
 ### Option 3: Hybrid Approach (Recommended for Future)
 
-**How it works:**
 - **Primary:** Scan local repositories (always available)
 - **Optional:** GitHub API for enhanced metadata (issues, PRs, Actions status)
-
-**Pros:**
-- Works out of the box with local repos
-- Enhanced features available for users who authenticate
-- Graceful degradation
 
 ---
 
@@ -131,19 +103,21 @@ If this file exists, the `project-status` skill could:
 
 ---
 
-## Staging Plan (Deferred)
+## Staging Plan
 
-### Stage 1: Local Repository Scanning
-- Add repo config file support to `project-status` skill
-- Scan local repos for file patterns, git history
-- Upgrade status based on code evidence
+### Stage 1: Local Repository Scanning - IMPLEMENTED
+- [x] Add repo config file support to `project-status` skill
+- [x] Scan local repos for file patterns, git history
+- [x] Upgrade status based on code evidence
+- [x] Documentation in README.md
+- [x] Example config template
 
-### Stage 2: GitHub API Integration
+### Stage 2: GitHub API Integration - DEFERRED
 - Optional PAT configuration
 - Query GitHub for PRs, issues, Actions status
 - Richer status context
 
-### Stage 3: Marketplace-Ready
+### Stage 3: Marketplace-Ready - DEFERRED
 - OAuth flow (if marketplace supports)
 - Cross-platform path handling
 - Graceful fallback when no repos configured
