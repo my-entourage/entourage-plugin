@@ -24,7 +24,7 @@ Install the plugin for a specific project:
 
 ```bash
 cd /path/to/your/project
-claude plugin install entourage-skills --source ~/entourage-plugin --scope project
+claude plugin install entourage --source ~/entourage-plugin --scope project
 ```
 
 This adds the plugin to `.claude/settings.json`, which can be committed to share with your team.
