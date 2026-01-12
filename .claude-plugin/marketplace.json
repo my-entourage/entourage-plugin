@@ -1,0 +1,11 @@
+{
+  "name": "entourage-local",
+  "version": "1.0.0",
+  "description": "Local Entourage plugins marketplace",
+  "plugins": {
+    "entourage": {
+      "path": "..",
+      "description": "Shared skills for the Entourage team - grounded queries and project status reporting"
+    }
+  }
+}

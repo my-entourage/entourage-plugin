@@ -1,0 +1,131 @@
+{
+  "name": "repo-check",
+  "description": "Evaluations for the repo-check skill",
+  "testCases": [
+    {
+      "id": "no-config",
+      "name": "No repository configuration",
+      "input": "/repo-check auth",
+      "setup": {
+        "description": "No .entourage/repos.json file exists"
+      },
+      "expectedBehavior": "Returns message about missing configuration",
+      "expectedOutput": {
+        "contains": ["No repository configuration found", ".entourage/repos.json"]
+      }
+    },
+    {
+      "id": "invalid-path",
+      "name": "Invalid repository path",
+      "input": "/repo-check auth",
+      "setup": {
+        "config": {
+          "repos": [{"name": "bad-repo", "path": "/nonexistent/path"}]
+        }
+      },
+      "expectedBehavior": "Reports inaccessible repo, continues gracefully",
+      "expectedOutput": {
+        "contains": ["not accessible"]
+      }
+    },
+    {
+      "id": "complete-high-confidence",
+      "name": "Complete status with high confidence",
+      "input": "/repo-check Auth",
+      "setup": {
+        "description": "Repo has Auth.tsx and Auth.test.tsx on main branch"
+      },
+      "expectedBehavior": "Returns Complete status with High confidence",
+      "expectedOutput": {
+        "status": "Complete",
+        "confidence": "High"
+      }
+    },
+    {
+      "id": "in-progress-no-tests",
+      "name": "In Progress status - code without tests",
+      "input": "/repo-check Dashboard",
+      "setup": {
+        "description": "Repo has Dashboard.tsx but no test file"
+      },
+      "expectedBehavior": "Returns In Progress status with Medium confidence",
+      "expectedOutput": {
+        "status": "In Progress",
+        "confidence": "Medium"
+      }
+    },
+    {
+      "id": "feature-branch-only",
+      "name": "In Progress status - feature branch",
+      "input": "/repo-check payments",
+      "setup": {
+        "description": "Feature branch 'feature/payments' exists with commits"
+      },
+      "expectedBehavior": "Returns In Progress status with Low confidence",
+      "expectedOutput": {
+        "status": "In Progress",
+        "confidence": "Low"
+      }
+    },
+    {
+      "id": "unknown-component",
+      "name": "Unknown component",
+      "input": "/repo-check nonexistent-feature",
+      "setup": {
+        "description": "No matching files, branches, or commits"
+      },
+      "expectedBehavior": "Returns Unknown status",
+      "expectedOutput": {
+        "status": "Unknown"
+      }
+    },
+    {
+      "id": "multi-component",
+      "name": "Multiple components query",
+      "input": "/repo-check auth dashboard payments",
+      "setup": {
+        "description": "auth=Complete, dashboard=In Progress, payments=Unknown"
+      },
+      "expectedBehavior": "Returns summary table with all three components",
+      "expectedOutput": {
+        "contains": ["Summary", "auth", "dashboard", "payments"]
+      }
+    },
+    {
+      "id": "pattern-matching-camel",
+      "name": "Pattern matching - CamelCase to snake_case",
+      "input": "/repo-check UserAuth",
+      "setup": {
+        "description": "File exists as user_auth.tsx (snake_case). Skill converts UserAuth to user_auth pattern."
+      },
+      "expectedBehavior": "Converts CamelCase to snake_case and finds the file",
+      "expectedOutput": {
+        "contains": ["user_auth"],
+        "patternsSearched": ["**/*UserAuth*", "**/*user_auth*", "**/*user-auth*", "**/*userauth*"]
+      }
+    },
+    {
+      "id": "tilde-expansion",
+      "name": "Tilde path expansion",
+      "input": "/repo-check component",
+      "setup": {
+        "config": {
+          "repos": [{"name": "home-repo", "path": "~/code/repo"}]
+        }
+      },
+      "expectedBehavior": "Expands ~ to home directory path"
+    },
+    {
+      "id": "git-not-available",
+      "name": "Non-git directory fallback",
+      "input": "/repo-check component",
+      "setup": {
+        "description": "Configured path is not a git repository"
+      },
+      "expectedBehavior": "Falls back to file existence checks only",
+      "expectedOutput": {
+        "contains": ["Could not access git history"]
+      }
+    }
+  ]
+}
