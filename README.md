@@ -4,7 +4,21 @@ Shared Claude Code skills for the Entourage team. This repository is a Claude Co
 
 ## Installation
 
-### Option A: Local Plugin (Recommended for Development)
+### Option 1: Marketplace (Recommended)
+
+Add the marketplace and install the plugin:
+
+```bash
+/plugin marketplace add my-entourage/entourage-plugin
+/plugin install entourage@entourage-marketplace
+```
+
+Or use the interactive menu:
+1. Run `/plugin`
+2. Select "Discover" > "entourage-marketplace"
+3. Select "entourage" to install
+
+### Option 2: Local Plugin (For Development)
 
 Run Claude Code with the plugin directory:
 
@@ -18,7 +32,7 @@ Add an alias to your shell config (`~/.zshrc` or `~/.bashrc`) for convenience:
 alias claude-entourage='claude --plugin-dir ~/entourage-plugin'
 ```
 
-### Option B: Project-Level Installation
+### Option 3: Project-Level Installation
 
 Install the plugin for a specific project:
 
