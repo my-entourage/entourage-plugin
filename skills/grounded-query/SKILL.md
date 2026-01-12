@@ -73,3 +73,10 @@ The team chose Supabase as the primary database, with pgvector for embeddings su
 - Do NOT claim something is "Complete" or "Done" based only on meeting discussions
 - Distinguish between "discussed" and "implemented"
 - When in doubt, mark as PARTIAL or NOT FOUND rather than SUPPORTED
+
+---
+
+## After Output
+
+This skill returns results to the calling context. **Do not stop execution.**
+Continue with the next step in the workflow or TODO list.

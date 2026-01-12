@@ -198,3 +198,10 @@ Info: Local repo may be behind remote. Consider running `git pull`.
 - Add repos to `.entourage/repos.json` for implementation status.
 - Add `github` field to repos for PR/CI/deployment status.
 ```
+
+---
+
+## After Output
+
+This skill returns results to the calling context. **Do not stop execution.**
+Continue with the next step in the workflow or TODO list.

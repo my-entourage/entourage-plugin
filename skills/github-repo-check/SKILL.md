@@ -284,3 +284,10 @@ When checking multiple components, output a summary table followed by details:
 - Reviews: 2 approvals from @alice, @bob
 - Deployment: prod-v1.2.0 deployed Jan 8 14:32 UTC
 ```
+
+---
+
+## After Output
+
+This skill returns results to the calling context (usually `/project-status`). **Do not stop execution.**
+Continue with the next step in the workflow or TODO list.
