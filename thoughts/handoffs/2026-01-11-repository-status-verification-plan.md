@@ -1,8 +1,8 @@
 # Repository Status Verification Plan
 
-**Status:** Stage 1 Implemented (Local Repository Scanning)
+**Status:** Stage 2 Implemented (GitHub API Integration)
 **Date:** 2026-01-11
-**Updated:** 2026-01-11
+**Updated:** 2026-01-12
 
 ## Context
 
@@ -10,7 +10,7 @@ This plan documents the broader approach for verifying project status by cross-r
 1. Meeting transcripts (what was discussed/planned)
 2. Code repositories (what was actually implemented)
 
-Stage 1 (local repository scanning) has been implemented. Stage 2 (GitHub API) is deferred to future work.
+Stage 1 (local repository scanning) and Stage 2 (GitHub API integration) are now implemented.
 
 ---
 
@@ -20,48 +20,15 @@ When querying about project status, Claude can mark components as "Complete" bas
 
 ---
 
-## Approaches Evaluated
+## Current Architecture
 
-### Option 1: Local Repository Scanning (Claude Code Native)
+```
+project-status
+  ├── uses /repo-check (local git scanning)
+  └── uses /github-repo-check (GitHub API scanning)
+```
 
-Scan local git repositories that the user points to, analyzing:
-- File structure (do expected files exist?)
-- Git history (recent commits, branches)
-- Code content (implementations, tests, migrations)
-- CI/CD status (if accessible)
-
----
-
-### Option 2: GitHub API Integration
-
-Use GitHub's REST or GraphQL API to:
-- List repositories in an org
-- Check recent commits, PRs, issues
-- Read file contents
-- Check GitHub Actions status
-
----
-
-### Option 3: Hybrid Approach (Recommended for Future)
-
-- **Primary:** Scan local repositories (always available)
-- **Optional:** GitHub API for enhanced metadata (issues, PRs, Actions status)
-
----
-
-## Evidence Hierarchy
-
-To determine if a component is "Complete" vs "Planned" vs "In Progress":
-
-| Evidence Type | Status Implication | Source |
-|--------------|-------------------|--------|
-| Passing tests for feature | Strong completion signal | Local repo / CI |
-| Migration files executed | Schema exists | Local repo / DB |
-| Feature branch merged to main | Work completed | Git history / GitHub |
-| Open PR with code | In progress | GitHub API |
-| Committed code (no tests) | Partial implementation | Local repo |
-| Issue/task created | Planned | GitHub Issues / Linear |
-| Discussed in meeting | Ideation phase | Transcripts |
+The `/project-status` skill orchestrates both sub-skills and combines evidence using a unified hierarchy.
 
 ---
 
@@ -70,36 +37,76 @@ To determine if a component is "Complete" vs "Planned" vs "In Progress":
 **File:** `.entourage/repos.json`
 ```json
 {
+  "github": {
+    "token": "ghp_...",
+    "defaultOrg": "my-org"
+  },
   "repos": [
-    {"name": "entourage-web", "path": "~/Documents/code/@orgs/my-entourage/entourage-web"},
-    {"name": "entourage-context", "path": "~/entourage-context"}
+    {
+      "name": "entourage-web",
+      "path": "~/Documents/code/entourage-web",
+      "mainBranch": "main",
+      "github": "my-org/entourage-web"
+    }
   ]
 }
 ```
 
-If this file exists, the `project-status` skill could:
-1. Search repos for files matching component keywords
-2. Check for test files
-3. Look at git history for recent commits
-4. Upgrade status from "Discussed" to "In Progress" or "Complete" based on findings
+**Fields:**
+- `github.token` - Optional PAT (only needed if gh CLI unavailable)
+- `github.defaultOrg` - Default organization
+- `repos[].path` - Local path for `/repo-check`
+- `repos[].github` - GitHub identifier for `/github-repo-check`
 
 ---
 
-## Open Questions (For Future)
+## Evidence Hierarchy (Unified)
 
-1. **Repo discovery:** Should the skill auto-discover repos or require explicit configuration?
+| Priority | Evidence Type | Source | Max Status |
+|----------|--------------|--------|------------|
+| 1 | Deployment to production | GitHub | Shipped |
+| 2 | PR merged + CI passing | GitHub | Complete |
+| 3 | Code + tests on main | Local | Complete |
+| 4 | PR merged (no CI info) | GitHub | Complete |
+| 5 | Code + tests (any branch) | Local | Complete |
+| 6 | Open PR with approvals | GitHub | In Progress |
+| 7 | Code exists (no tests) | Local | In Progress |
+| 8 | Open PR (no reviews) | GitHub | In Progress |
+| 9 | Feature branch exists | Local | In Progress |
+| 10 | GitHub Issue (in progress) | GitHub | In Progress |
+| 11 | GitHub Issue (open) | GitHub | Planned |
+| 12 | Architecture decision | Transcripts | Planned |
+| 13 | Meeting discussion | Transcripts | Discussed |
 
-2. **What counts as "complete"?**
-   - Code exists?
-   - Code exists + tests pass?
-   - Merged to main?
-   - Deployed?
+**Conflict Resolution:** GitHub is source of truth. When local and GitHub disagree, GitHub wins.
 
-3. **Transcript parsing:** How structured is the task/feature naming in transcripts? Can we reliably extract component names to search for?
+---
 
-4. **GitHub vs local priority:** If both are available, which source wins for status determination?
+## GitHub-Only Data Points
 
-5. **Marketplace authentication:** Does the Claude Code marketplace support storing user secrets (like GitHub PATs)?
+These are not available via local git but are available via GitHub API:
+
+| Data Point | Evidence Value | API Endpoint |
+|------------|----------------|--------------|
+| Pull Requests | In Progress → Complete | `/repos/{owner}/{repo}/pulls` |
+| Issues | Planned signals | `/repos/{owner}/{repo}/issues` |
+| GitHub Actions | CI pass/fail | `/repos/{owner}/{repo}/actions/runs` |
+| Deployments | Shipped verification | `/repos/{owner}/{repo}/deployments` |
+| Releases | Shipped with version | `/repos/{owner}/{repo}/releases` |
+| Code Reviews | Quality gate | `/repos/{owner}/{repo}/pulls/{pr}/reviews` |
+
+---
+
+## Authentication
+
+**Preferred: gh CLI**
+- Handles auth automatically after `gh auth login`
+- Credentials stored in system keychain
+- Works with all organizations
+
+**Fallback: Personal Access Token**
+- Store in `.entourage/repos.json`
+- Required scopes: `repo`, `read:org`, `workflow`
 
 ---
 
@@ -112,10 +119,14 @@ If this file exists, the `project-status` skill could:
 - [x] Documentation in README.md
 - [x] Example config template
 
-### Stage 2: GitHub API Integration - DEFERRED
-- Optional PAT configuration
-- Query GitHub for PRs, issues, Actions status
-- Richer status context
+### Stage 2: GitHub API Integration - IMPLEMENTED
+- [x] Create `/github-repo-check` skill
+- [x] gh CLI preferred, PAT fallback
+- [x] Query PRs, issues, Actions, deployments
+- [x] Update `/project-status` to orchestrate both skills
+- [x] Unified evidence hierarchy
+- [x] GitHub as source of truth for conflicts
+- [x] Documentation for GitHub configuration
 
 ### Stage 3: Marketplace-Ready - DEFERRED
 - OAuth flow (if marketplace supports)
@@ -124,6 +135,18 @@ If this file exists, the `project-status` skill could:
 
 ---
 
-## Related Plan
+## Resolved Questions
 
-See `/Users/jaredsisk/.claude/plans/glowing-doodling-crown.md` for the current implementation plan focusing on the `grounded-query` and `project-status` skills (data files only, no repo integration).
+1. **GitHub vs local priority:** GitHub is source of truth (represents canonical shared state)
+2. **What counts as "complete"?** PR merged + CI passing = Very High confidence
+3. **Authentication method:** gh CLI preferred (secure, automatic), PAT as fallback
+4. **APIs vs Webhooks:** REST API chosen (simpler for on-demand queries, no infrastructure needed)
+
+---
+
+## Related Files
+
+- `/Users/jaredsisk/.claude/plans/groovy-drifting-lake.md` - Detailed Phase 2 implementation plan
+- `skills/github-repo-check/SKILL.md` - New GitHub scanning skill
+- `skills/project-status/SKILL.md` - Updated to orchestrate both skills
+- `skills/repo-check/SKILL.md` - Local git scanning skill

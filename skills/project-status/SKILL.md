@@ -20,159 +20,92 @@ Apply when user asks:
 | Status | Definition | Evidence Required |
 |--------|------------|-------------------|
 | `Discussed` | Mentioned in meetings/messages | Transcript/message reference |
-| `Planned` | Explicit decisions documented | Decision in transcript + rationale |
-| `In Progress` | Implementation started | Code in repo (requires repo config) |
-| `Complete` | Working implementation | Code + tests passing (requires repo) |
+| `Planned` | Explicit decisions documented | Decision in transcript + rationale, or GitHub Issue |
+| `In Progress` | Implementation started | Code in repo or open PR |
+| `Complete` | Working implementation | Code + tests, or merged PR with CI passing |
+| `Shipped` | Deployed to production | Deployment evidence from GitHub |
 | `Unknown` | Insufficient evidence | N/A |
 
 ## Workflow
 
 1. Identify components/features in query
-2. Check for repository configuration (see below)
-3. Search data files for mentions of each component
-4. If repos configured, scan for code evidence
-5. Classify evidence type and determine status
-6. Output status table with sources
+2. Search data files for transcript mentions of each component
+3. Check if `.entourage/repos.json` exists
+4. If repos configured with `path` field:
+   - Invoke `/repo-check <components>` for local git evidence
+5. If repos configured with `github` field:
+   - Invoke `/github-repo-check <components>` for GitHub evidence
+6. Combine all evidence sources using the unified hierarchy
+7. Output status table with sources
 
 ---
 
-## Repository Configuration
+## Repository Verification
 
-Before checking implementation status, look for repository configuration:
+This skill uses two sub-skills to verify implementation status:
+- `/repo-check` - Scans local git repositories
+- `/github-repo-check` - Queries GitHub API for PRs, issues, Actions, deployments
 
-### Step 1: Check for Config File
+### Configuration Check
 
-Use the Read tool to check if `.entourage/repos.json` exists in the current working directory.
+Read `.entourage/repos.json` and check each repo entry for:
+- `path` field - Enables local scanning via `/repo-check`
+- `github` field - Enables GitHub scanning via `/github-repo-check`
 
-### Step 2: Parse Configuration
+### With Local Repository (`path` configured)
 
-If the file exists, it contains a `repos` array. Each repo has:
-- `name`: Human-readable identifier
-- `path`: Local filesystem path (may contain `~`)
-- `mainBranch`: Branch name for "shipped" status (default: "main")
+1. Invoke `/repo-check <component-names>`
+2. Get evidence: file existence, test files, git history
 
-Example config:
-```json
-{
-  "repos": [
-    {
-      "name": "entourage-web",
-      "path": "~/Documents/code/entourage-web",
-      "mainBranch": "main"
-    }
-  ]
-}
-```
+### With GitHub Repository (`github` configured)
 
-### Step 3: Expand Paths
+1. Invoke `/github-repo-check <component-names>`
+2. Get evidence: PRs, issues, Actions status, deployments
 
-Replace `~` with the user's home directory using Bash:
-```bash
-echo ~/path/to/repo
-```
+### Without Any Repository Configuration
 
-### Step 4: Verify Access
-
-For each repo, confirm the path exists:
-```bash
-test -d "/expanded/path" && echo "exists" || echo "missing"
-```
+- Skip both `/repo-check` and `/github-repo-check`
+- Limit status levels to "Discussed" or "Planned" (transcript evidence only)
+- Add note about configuring repos
 
 ---
 
-## Local Repository Scanning
+## Unified Evidence Hierarchy
 
-For each component/feature being queried, perform these checks against each configured repository:
+When combining evidence from transcripts, local repos, and GitHub, use this priority order:
 
-### 1. File Existence Check
+| Priority | Evidence Type | Source | Max Status |
+|----------|--------------|--------|------------|
+| 1 | Deployment to production | GitHub | Shipped |
+| 2 | PR merged + CI passing | GitHub | Complete |
+| 3 | Code + tests on main | Local | Complete |
+| 4 | PR merged (no CI info) | GitHub | Complete |
+| 5 | Code + tests (any branch) | Local | Complete |
+| 6 | Open PR with approvals | GitHub | In Progress |
+| 7 | Code exists (no tests) | Local | In Progress |
+| 8 | Open PR (no reviews) | GitHub | In Progress |
+| 9 | Feature branch exists | Local | In Progress |
+| 10 | GitHub Issue (in progress label) | GitHub | In Progress |
+| 11 | GitHub Issue (open) | GitHub | Planned |
+| 12 | Architecture decision documented | Transcripts | Planned |
+| 13 | Meeting discussion | Transcripts | Discussed |
 
-Use Glob to find files matching the component name (try multiple patterns):
-```
-**/*ComponentName*
-**/*component_name*
-**/*component-name*
-```
-
-### 2. Test File Detection
-
-Search for test files:
-```
-**/*ComponentName*.test.*
-**/*ComponentName*.spec.*
-**/test*/*ComponentName*
-**/__tests__/*ComponentName*
-```
-
-### 3. Git History Analysis
-
-Check recent commits mentioning the component:
-```bash
-cd /path/to/repo && git log --oneline --all --since="3 months ago" --grep="ComponentName" | head -20
-```
-
-Check for feature branches:
-```bash
-cd /path/to/repo && git branch -a | grep -i "component"
-```
-
-Check if component code is on main branch:
-```bash
-cd /path/to/repo && git log main --oneline -- "**/ComponentName*" | head -5
-```
-
-### 4. Migration/Schema Detection (for database components)
-
-Look for migration files:
-```
-**/migrations/*component*
-**/db/*component*
-```
+**Rule:** Higher priority evidence overrides lower. If GitHub shows PR merged but local shows no tests, use the GitHub evidence (Complete).
 
 ---
 
-## Evidence Synthesis
+## Conflict Resolution: GitHub is Source of Truth
 
-Apply this decision tree to determine component status:
+When local and GitHub evidence conflict (e.g., PR merged on GitHub but local repo not updated):
 
+**GitHub wins** - GitHub represents the canonical shared state.
+
+When this conflict is detected, add a sync note to the output:
 ```
-1. Code + tests found + on main branch?
-   YES -> Status: Complete (High confidence)
-
-2. Code + tests found (any branch)?
-   YES -> Status: Complete (Medium confidence)
-
-3. Code found but no tests?
-   YES -> Status: In Progress (Medium confidence)
-
-4. Feature branch exists with commits?
-   YES -> Status: In Progress (Low confidence)
-
-5. Discussed in meeting transcripts?
-   YES -> Status: Discussed (High confidence)
-
-6. No evidence found?
-   -> Status: Unknown
+Info: Local repo may be behind remote. Consider running `git pull`.
 ```
 
 ---
-
-## Error Handling
-
-### Repository Not Found
-If a configured repo path doesn't exist:
-- Report in output: "Repository 'name' not accessible at path"
-- Continue with other repos
-- Don't fail the entire status check
-
-### Git Command Failures
-If git commands fail (not a git repo, permissions):
-- Report: "Could not access git history for 'name'"
-- Fall back to file existence checks only
-
-### Path Expansion Failures
-If `~` expansion fails:
-- Try `$HOME/rest/of/path` as fallback
-- Report: "Could not expand path for 'name'"
 
 ## Output Format
 
@@ -181,7 +114,7 @@ If `~` expansion fails:
 
 | Component | Status | Evidence | Source | Confidence |
 |-----------|--------|----------|--------|------------|
-| [Name] | Discussed/Planned/etc | [Brief description] | [Repo name or "Transcripts"] | High/Med/Low |
+| [Name] | Discussed/Planned/etc | [Brief description] | [Source] | High/Med/Low |
 
 ### Notes
 - [Any caveats about verification limitations]
@@ -191,26 +124,46 @@ If `~` expansion fails:
 
 **Never mark a component as "Complete" or "In Progress" based solely on meeting transcripts.**
 
-Meeting transcripts can only support `Discussed` or `Planned` status. Higher statuses require code evidence from repositories.
+Meeting transcripts can only support `Discussed` or `Planned` status. Higher statuses require code evidence from repositories (local or GitHub).
 
-If repos are not configured, add this note:
+If no repos are configured, add this note:
 > Repository verification not configured. Maximum verifiable status is "Planned". Add repos to `.entourage/repos.json` for implementation status.
 
-## Evidence Hierarchy
-
-When determining status, use this hierarchy (strongest to weakest evidence):
-
-| Evidence Type | Max Status Level |
-|--------------|------------------|
-| Meeting discussion only | Discussed |
-| Architecture decisions documented | Planned |
-| Code exists (no tests) | In Progress |
-| Code + passing tests | Complete |
-| Merged to main + deployed | Shipped |
+---
 
 ## Example Output
 
-### With Repository Verification
+### With Both Local and GitHub Verification
+
+**Query:** "What's the status of authentication?"
+
+```
+## Status: Entourage
+
+| Component | Status | Evidence | Source | Confidence |
+|-----------|--------|----------|--------|------------|
+| Clerk auth | Shipped | PR #42 merged, deployed to prod | GitHub | Very High |
+| User dashboard | Complete | PR #45 merged, CI passing | GitHub + Local | High |
+| Email notifications | In Progress | PR #48 open, 2 approvals | GitHub | High |
+| Analytics | Planned | Issue #52 created | GitHub | High |
+| Notifications | Discussed | Mentioned Dec 21 meeting | Transcripts | High |
+
+Info: Local repo may be behind remote. Consider running `git pull`.
+
+### Evidence Details
+
+**Clerk auth (Shipped)**
+- PR: #42 "Add Clerk authentication" - merged Jan 8
+- Actions: Build, Test, Lint passed
+- Deployment: prod-v1.2.0 deployed Jan 8 14:32 UTC
+
+**User dashboard (Complete)**
+- PR: #45 "User dashboard" - merged Jan 10
+- Actions: Build, Test passed
+- Local: Tests found at `src/dashboard/__tests__/`
+```
+
+### With Local Repository Only
 
 **Query:** "What's the status of authentication?"
 
@@ -223,12 +176,8 @@ When determining status, use this hierarchy (strongest to weakest evidence):
 | User dashboard | In Progress | Code exists, no tests | entourage-web | Medium |
 | Email notifications | Discussed | Mentioned Dec 21 meeting | Transcripts | High |
 
-### Evidence Details
-
-**Clerk auth (Complete)**
-- File: `src/auth/ClerkProvider.tsx` found
-- Tests: `src/auth/__tests__/ClerkProvider.test.tsx` - exists
-- Git: On main branch, last commit 2 days ago
+### Notes
+- GitHub verification not configured. Add `github` field to repos for PR/CI/deployment status.
 ```
 
 ### Without Repository Configuration
@@ -245,6 +194,7 @@ When determining status, use this hierarchy (strongest to weakest evidence):
 | API endpoints | Unknown | No mentions found | - | Low |
 
 ### Notes
-- Repository verification not configured. Maximum verifiable status is "Planned". Add repos to `.entourage/repos.json` for implementation status.
-- "Complete" and "In Progress" require code evidence from repositories.
+- Repository verification not configured. Maximum verifiable status is "Planned".
+- Add repos to `.entourage/repos.json` for implementation status.
+- Add `github` field to repos for PR/CI/deployment status.
 ```
