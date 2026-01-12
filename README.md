@@ -35,12 +35,12 @@ This adds the plugin to `.claude/settings.json`, which can be committed to share
 |-------|---------|-------------|
 | Grounded Query | `/grounded-query` | Verify claims against source documents |
 | Project Status | `/project-status` | Report implementation status with evidence |
-| Repo Check | `/repo-check` | Scan local repositories for implementation evidence |
+| Local Repo Check | `/local-repo-check` | Scan local repositories for implementation evidence |
 | GitHub Repo Check | `/github-repo-check` | Query GitHub API for PRs, issues, Actions, deployments |
 
 ## Repository Configuration (Optional)
 
-The `/repo-check`, `/github-repo-check`, and `/project-status` skills can verify implementation status by scanning local git repositories and querying GitHub. To enable this:
+The `/local-repo-check`, `/github-repo-check`, and `/project-status` skills can verify implementation status by scanning local git repositories and querying GitHub. To enable this:
 
 1. Create a `.entourage/` directory in your working project (where you run Claude Code)
 
@@ -209,7 +209,7 @@ entourage-plugin/
 │   │   └── SKILL.md
 │   ├── project-status/
 │   │   └── SKILL.md
-│   ├── repo-check/
+│   ├── local-repo-check/
 │   │   └── SKILL.md
 │   └── github-repo-check/
 │       └── SKILL.md
