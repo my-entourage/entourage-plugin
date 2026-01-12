@@ -243,3 +243,10 @@ When checking multiple components, output a summary table followed by details fo
 - Git status: On main branch, last commit 2 days ago
 - Related commits: "Add Clerk authentication provider" (abc1234)
 ```
+
+---
+
+## After Output
+
+This skill returns results to the calling context (usually `/project-status`). **Do not stop execution.**
+Continue with the next step in the workflow or TODO list.
