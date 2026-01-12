@@ -32,7 +32,7 @@ Apply when user asks:
 2. Search data files for transcript mentions of each component
 3. Check if `.entourage/repos.json` exists
 4. If repos configured with `path` field:
-   - Invoke `/repo-check <components>` for local git evidence
+   - Invoke `/local-repo-check <components>` for local git evidence
 5. If repos configured with `github` field:
    - Invoke `/github-repo-check <components>` for GitHub evidence
 6. Combine all evidence sources using the unified hierarchy
@@ -43,18 +43,18 @@ Apply when user asks:
 ## Repository Verification
 
 This skill uses two sub-skills to verify implementation status:
-- `/repo-check` - Scans local git repositories
+- `/local-repo-check` - Scans local git repositories
 - `/github-repo-check` - Queries GitHub API for PRs, issues, Actions, deployments
 
 ### Configuration Check
 
 Read `.entourage/repos.json` and check each repo entry for:
-- `path` field - Enables local scanning via `/repo-check`
+- `path` field - Enables local scanning via `/local-repo-check`
 - `github` field - Enables GitHub scanning via `/github-repo-check`
 
 ### With Local Repository (`path` configured)
 
-1. Invoke `/repo-check <component-names>`
+1. Invoke `/local-repo-check <component-names>`
 2. Get evidence: file existence, test files, git history
 
 ### With GitHub Repository (`github` configured)
@@ -64,7 +64,7 @@ Read `.entourage/repos.json` and check each repo entry for:
 
 ### Without Any Repository Configuration
 
-- Skip both `/repo-check` and `/github-repo-check`
+- Skip both `/local-repo-check` and `/github-repo-check`
 - Limit status levels to "Discussed" or "Planned" (transcript evidence only)
 - Add note about configuring repos
 

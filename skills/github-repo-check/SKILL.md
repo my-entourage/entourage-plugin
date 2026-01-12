@@ -173,7 +173,7 @@ Apply this decision tree to determine component status:
 
 8. No GitHub evidence found?
    -> Status: Unknown
-   -> Output: "No GitHub evidence found. Defer to /repo-check for local evidence."
+   -> Output: "No GitHub evidence found. Defer to /local-repo-check for local evidence."
 ```
 
 ---
