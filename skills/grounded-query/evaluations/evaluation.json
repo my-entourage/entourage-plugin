@@ -1,0 +1,152 @@
+{
+  "name": "grounded-query",
+  "description": "Evaluations for the grounded-query skill",
+  "testCases": [
+    {
+      "id": "supported-claim",
+      "name": "Direct evidence found",
+      "input": "What database did the team choose?",
+      "setup": {
+        "description": "Transcript contains explicit statement: 'We decided to use Supabase as the primary database'"
+      },
+      "expectedBehavior": "Returns SUPPORTED status with file reference",
+      "expectedOutput": {
+        "evidenceStatus": "SUPPORTED",
+        "contains": ["Supabase", "database"],
+        "hasSource": true
+      }
+    },
+    {
+      "id": "partial-evidence",
+      "name": "Related but inexact match",
+      "input": "Is the team using PostgreSQL?",
+      "setup": {
+        "description": "Transcript mentions Supabase (which uses PostgreSQL) but doesn't explicitly say PostgreSQL"
+      },
+      "expectedBehavior": "Returns PARTIAL status indicating indirect evidence",
+      "expectedOutput": {
+        "evidenceStatus": "PARTIAL",
+        "contains": ["Supabase", "related"]
+      }
+    },
+    {
+      "id": "not-found",
+      "name": "No evidence in sources",
+      "input": "What CI/CD tool is the team using?",
+      "setup": {
+        "description": "No transcripts mention CI/CD tools"
+      },
+      "expectedBehavior": "Returns NOT FOUND status",
+      "expectedOutput": {
+        "evidenceStatus": "NOT FOUND",
+        "contains": ["could not be verified", "no evidence"]
+      }
+    },
+    {
+      "id": "multiple-claims",
+      "name": "Multiple claims verification",
+      "input": "Summarize the tech stack decisions",
+      "setup": {
+        "description": "Response will contain multiple claims about database, frontend, hosting, etc."
+      },
+      "expectedBehavior": "Each claim verified independently in evidence table",
+      "expectedOutput": {
+        "tableRows": ">=3",
+        "columns": ["Claim", "Status", "Source"]
+      }
+    },
+    {
+      "id": "mixed-evidence",
+      "name": "Claims with different statuses",
+      "input": "What decisions were made about auth, database, and deployment?",
+      "setup": {
+        "description": "Auth and database discussed in transcripts, deployment never mentioned"
+      },
+      "expectedBehavior": "Evidence table shows mix of SUPPORTED, PARTIAL, and NOT FOUND",
+      "expectedOutput": {
+        "hasStatus": ["SUPPORTED", "NOT FOUND"],
+        "format": "table"
+      }
+    },
+    {
+      "id": "date-verification",
+      "name": "Date claim verification",
+      "input": "When was the MVP deadline set?",
+      "setup": {
+        "description": "Transcript from Dec 22 mentions 'MVP by end of January'"
+      },
+      "expectedBehavior": "Verifies date claim against source file timestamp and content",
+      "expectedOutput": {
+        "evidenceStatus": "SUPPORTED",
+        "contains": ["January", "Dec", "2025-12-22"]
+      }
+    },
+    {
+      "id": "person-attribution",
+      "name": "Person said X",
+      "input": "Who suggested using Supabase?",
+      "setup": {
+        "description": "Transcript shows specific person mentioning Supabase recommendation"
+      },
+      "expectedBehavior": "Verifies attribution against transcript content",
+      "expectedOutput": {
+        "evidenceStatus": "SUPPORTED",
+        "hasSource": true,
+        "contains": ["mentioned", "suggested"]
+      }
+    },
+    {
+      "id": "decision-claim",
+      "name": "Team decision verification",
+      "input": "Did the team decide to use Next.js?",
+      "setup": {
+        "description": "Transcript contains decision statement about Next.js"
+      },
+      "expectedBehavior": "Confirms decision with SUPPORTED status and source reference",
+      "expectedOutput": {
+        "evidenceStatus": "SUPPORTED",
+        "contains": ["decided", "Next.js"],
+        "hasSource": true
+      }
+    },
+    {
+      "id": "status-inflation-prevention",
+      "name": "Prevents status inflation",
+      "input": "Is authentication complete?",
+      "setup": {
+        "description": "Transcript says 'we'll implement Clerk auth' but no code evidence"
+      },
+      "expectedBehavior": "Does NOT claim Complete status based only on discussion",
+      "expectedOutput": {
+        "notContains": ["Complete", "Done", "Finished", "Implemented"],
+        "contains": ["discussed", "planned", "will implement"]
+      }
+    },
+    {
+      "id": "no-data-files",
+      "name": "No source files available",
+      "input": "What did the team decide?",
+      "setup": {
+        "description": "No data/ directory or empty transcripts folder"
+      },
+      "expectedBehavior": "Warns about inability to verify claims",
+      "expectedOutput": {
+        "contains": ["no data files", "cannot verify", "no transcripts"]
+      }
+    },
+    {
+      "id": "evidence-table-format",
+      "name": "Correct output format",
+      "input": "What tech stack was chosen?",
+      "setup": {
+        "description": "Standard query with verifiable claims"
+      },
+      "expectedBehavior": "Response ends with properly formatted evidence table",
+      "expectedOutput": {
+        "endsWithTable": true,
+        "tableHeaders": ["Claim", "Status", "Source"],
+        "format": "markdown"
+      }
+    }
+  ]
+}

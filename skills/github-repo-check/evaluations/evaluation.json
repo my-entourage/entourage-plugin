@@ -178,10 +178,10 @@
       "setup": {
         "description": "No PRs, issues, or deployments found for component"
       },
-      "expectedBehavior": "Returns Unknown status, defers to /repo-check",
+      "expectedBehavior": "Returns Unknown status, defers to /local-repo-check",
       "expectedOutput": {
         "status": "Unknown",
-        "contains": ["No GitHub evidence", "repo-check"]
+        "contains": ["No GitHub evidence", "local-repo-check"]
       }
     },
     {

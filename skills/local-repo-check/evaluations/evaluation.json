@@ -1,11 +1,11 @@
 {
-  "name": "repo-check",
-  "description": "Evaluations for the repo-check skill",
+  "name": "local-repo-check",
+  "description": "Evaluations for the local-repo-check skill",
   "testCases": [
     {
       "id": "no-config",
       "name": "No repository configuration",
-      "input": "/repo-check auth",
+      "input": "/local-repo-check auth",
       "setup": {
         "description": "No .entourage/repos.json file exists"
       },
@@ -17,7 +17,7 @@
     {
       "id": "invalid-path",
       "name": "Invalid repository path",
-      "input": "/repo-check auth",
+      "input": "/local-repo-check auth",
       "setup": {
         "config": {
           "repos": [{"name": "bad-repo", "path": "/nonexistent/path"}]
@@ -31,7 +31,7 @@
     {
       "id": "complete-high-confidence",
       "name": "Complete status with high confidence",
-      "input": "/repo-check Auth",
+      "input": "/local-repo-check Auth",
       "setup": {
         "description": "Repo has Auth.tsx and Auth.test.tsx on main branch"
       },
@@ -44,7 +44,7 @@
     {
       "id": "in-progress-no-tests",
       "name": "In Progress status - code without tests",
-      "input": "/repo-check Dashboard",
+      "input": "/local-repo-check Dashboard",
       "setup": {
         "description": "Repo has Dashboard.tsx but no test file"
       },
@@ -57,7 +57,7 @@
     {
       "id": "feature-branch-only",
       "name": "In Progress status - feature branch",
-      "input": "/repo-check payments",
+      "input": "/local-repo-check payments",
       "setup": {
         "description": "Feature branch 'feature/payments' exists with commits"
       },
@@ -70,7 +70,7 @@
     {
       "id": "unknown-component",
       "name": "Unknown component",
-      "input": "/repo-check nonexistent-feature",
+      "input": "/local-repo-check nonexistent-feature",
       "setup": {
         "description": "No matching files, branches, or commits"
       },
@@ -82,7 +82,7 @@
     {
       "id": "multi-component",
       "name": "Multiple components query",
-      "input": "/repo-check auth dashboard payments",
+      "input": "/local-repo-check auth dashboard payments",
       "setup": {
         "description": "auth=Complete, dashboard=In Progress, payments=Unknown"
       },
@@ -94,7 +94,7 @@
     {
       "id": "pattern-matching-camel",
       "name": "Pattern matching - CamelCase to snake_case",
-      "input": "/repo-check UserAuth",
+      "input": "/local-repo-check UserAuth",
       "setup": {
         "description": "File exists as user_auth.tsx (snake_case). Skill converts UserAuth to user_auth pattern."
       },
@@ -107,7 +107,7 @@
     {
       "id": "tilde-expansion",
       "name": "Tilde path expansion",
-      "input": "/repo-check component",
+      "input": "/local-repo-check component",
       "setup": {
         "config": {
           "repos": [{"name": "home-repo", "path": "~/code/repo"}]
@@ -122,7 +122,7 @@
     {
       "id": "git-not-available",
       "name": "Non-git directory fallback",
-      "input": "/repo-check component",
+      "input": "/local-repo-check component",
       "setup": {
         "description": "Configured path is not a git repository"
       },

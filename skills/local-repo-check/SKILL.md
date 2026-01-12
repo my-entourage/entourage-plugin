@@ -1,5 +1,5 @@
 ---
-name: repo-check
+name: local-repo-check
 description: Verify implementation status by scanning local Git repositories for code, tests, and commit history. Use when checking if a feature is actually implemented.
 ---
 
@@ -9,7 +9,7 @@ Scan local Git repositories to verify implementation status of components/featur
 
 ## When to Use
 
-- Directly invoked: `/repo-check authentication`
+- Directly invoked: `/local-repo-check authentication`
 - Checking if a component has code in the codebase
 - Verifying implementation claims against actual code
 - Determining "In Progress" vs "Complete" status
@@ -18,8 +18,8 @@ Scan local Git repositories to verify implementation status of components/featur
 ## Input
 
 Component or feature name(s) to verify. Examples:
-- `/repo-check authentication`
-- `/repo-check user-dashboard payments`
+- `/local-repo-check authentication`
+- `/local-repo-check user-dashboard payments`
 
 ---
 
@@ -224,7 +224,7 @@ When checking multiple components, output a summary table followed by details fo
 
 ## Example
 
-**Query:** `/repo-check clerk-auth`
+**Query:** `/local-repo-check clerk-auth`
 
 **Output:**
 

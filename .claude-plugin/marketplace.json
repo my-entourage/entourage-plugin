@@ -1,11 +1,28 @@
 {
-  "name": "entourage-local",
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "entourage-marketplace",
   "version": "1.0.0",
-  "description": "Local Entourage plugins marketplace",
-  "plugins": {
-    "entourage": {
-      "path": "..",
-      "description": "Shared skills for the Entourage team - grounded queries and project status reporting"
+  "description": "Shared skills for the Entourage team - grounded queries and project status reporting",
+  "owner": {
+    "name": "My Entourage",
+    "email": "blaze46593@gmail.com",
+    "url": "https://github.com/my-entourage/entourage-plugin"
+  },
+  "plugins": [
+    {
+      "name": "entourage",
+      "description": "Shared skills for the Entourage team - grounded queries and project status reporting",
+      "version": "1.0.0",
+      "author": {
+        "name": "My Entourage",
+        "email": "blaze46593@gmail.com"
+      },
+      "source": {
+        "source": "github",
+        "repo": "my-entourage/entourage-plugin"
+      },
+      "category": "productivity",
+      "tags": ["project-status", "grounded-query", "github", "verification"]
     }
-  }
+  ]
 }

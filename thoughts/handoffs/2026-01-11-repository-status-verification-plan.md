@@ -24,7 +24,7 @@ When querying about project status, Claude can mark components as "Complete" bas
 
 ```
 project-status
-  ├── uses /repo-check (local git scanning)
+  ├── uses /local-repo-check (local git scanning)
   └── uses /github-repo-check (GitHub API scanning)
 ```
 
@@ -55,7 +55,7 @@ The `/project-status` skill orchestrates both sub-skills and combines evidence u
 **Fields:**
 - `github.token` - Optional PAT (only needed if gh CLI unavailable)
 - `github.defaultOrg` - Default organization
-- `repos[].path` - Local path for `/repo-check`
+- `repos[].path` - Local path for `/local-repo-check`
 - `repos[].github` - GitHub identifier for `/github-repo-check`
 
 ---
@@ -149,4 +149,4 @@ These are not available via local git but are available via GitHub API:
 - `/Users/jaredsisk/.claude/plans/groovy-drifting-lake.md` - Detailed Phase 2 implementation plan
 - `skills/github-repo-check/SKILL.md` - New GitHub scanning skill
 - `skills/project-status/SKILL.md` - Updated to orchestrate both skills
-- `skills/repo-check/SKILL.md` - Local git scanning skill
+- `skills/local-repo-check/SKILL.md` - Local git scanning skill
