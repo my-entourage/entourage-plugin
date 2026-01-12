@@ -113,7 +113,11 @@
           "repos": [{"name": "home-repo", "path": "~/code/repo"}]
         }
       },
-      "expectedBehavior": "Expands ~ to home directory path"
+      "expectedBehavior": "Expands ~ to home directory path",
+      "expectedOutput": {
+        "contains": ["home-repo", "/code/repo"],
+        "notContains": ["~/code/repo"]
+      }
     },
     {
       "id": "git-not-available",

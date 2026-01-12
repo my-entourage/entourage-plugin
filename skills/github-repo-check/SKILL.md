@@ -20,6 +20,8 @@ Component or feature name(s) to verify. Examples:
 - `/github-repo-check authentication`
 - `/github-repo-check user-dashboard payments`
 
+**Note:** Component searches are case-insensitive. `/github-repo-check Auth` and `/github-repo-check auth` will find the same PRs and issues.
+
 ---
 
 ## Authentication
@@ -61,6 +63,11 @@ curl -H "Authorization: token $TOKEN" "https://api.github.com/..."
 
 Use the Read tool to check if `.entourage/repos.json` exists.
 
+**If the file does not exist:**
+```
+> No repository configuration found. Create `.entourage/repos.json` with your repository settings.
+```
+
 ### Step 2: Extract GitHub Repos
 
 Look for `github` field in each repo entry (format: `owner/repo`):
@@ -81,7 +88,7 @@ Look for `github` field in each repo entry (format: `owner/repo`):
 
 If no repos have a `github` field configured:
 ```
-> GitHub verification not configured. Add `github` field to repos in `.entourage/repos.json`.
+> No GitHub configuration found. Add `github` field to repos in `.entourage/repos.json`.
 ```
 
 ---
@@ -165,7 +172,8 @@ Apply this decision tree to determine component status:
    YES -> Status: Planned (High confidence)
 
 8. No GitHub evidence found?
-   -> Status: Unknown (defer to /repo-check for local evidence)
+   -> Status: Unknown
+   -> Output: "No GitHub evidence found. Defer to /repo-check for local evidence."
 ```
 
 ---
