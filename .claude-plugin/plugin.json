@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "description": "Shared skills for the Entourage team - grounded queries and project status reporting",
   "author": {
-    "name": "My Entourage"
-  }
+    "name": "My Entourage",
+    "email": "blaze46593@gmail.com"
+  },
+  "repository": "https://github.com/my-entourage/entourage-plugin"
 }
