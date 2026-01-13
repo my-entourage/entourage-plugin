@@ -1,0 +1,190 @@
+# Skill Evaluations CI Pipeline
+#
+# This workflow validates evaluation definitions and plugin structure.
+# It does NOT run actual Claude evaluations (requires API key).
+#
+# Full evaluations can be run locally with: ./tests/run.sh
+
+name: Skill Evaluations
+
+on:
+  pull_request:
+    paths:
+      - 'skills/**'
+      - 'tests/**'
+      - '.github/workflows/evals.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'skills/**'
+      - 'tests/**'
+  workflow_dispatch:
+    inputs:
+      skill:
+        description: 'Specific skill to validate (leave empty for all)'
+        required: false
+        default: ''
+
+jobs:
+  validate-plugin:
+    name: Validate Plugin Structure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check plugin manifest exists
+        run: |
+          if [[ ! -f .claude-plugin/plugin.json ]]; then
+            echo "Error: Missing .claude-plugin/plugin.json"
+            exit 1
+          fi
+          echo "✓ Plugin manifest found"
+
+      - name: Validate plugin.json syntax
+        run: |
+          if ! jq empty .claude-plugin/plugin.json 2>/dev/null; then
+            echo "Error: Invalid JSON in .claude-plugin/plugin.json"
+            exit 1
+          fi
+          echo "✓ Plugin manifest is valid JSON"
+
+      - name: Check required skill files
+        run: |
+          errors=0
+          for skill_dir in skills/*/; do
+            skill_name=$(basename "$skill_dir")
+
+            # Check SKILL.md exists
+            if [[ ! -f "$skill_dir/SKILL.md" ]]; then
+              echo "Error: Missing SKILL.md in $skill_dir"
+              errors=$((errors + 1))
+            fi
+          done
+
+          if [[ $errors -gt 0 ]]; then
+            echo "Found $errors error(s)"
+            exit 1
+          fi
+          echo "✓ All skills have required SKILL.md files"
+
+  validate-evaluations:
+    name: Validate Evaluation Definitions
+    runs-on: ubuntu-latest
+    needs: validate-plugin
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
+
+      - name: Run validation script
+        run: |
+          chmod +x tests/validate.sh
+          if [[ -n "${{ github.event.inputs.skill }}" ]]; then
+            ./tests/validate.sh "${{ github.event.inputs.skill }}"
+          else
+            ./tests/validate.sh
+          fi
+
+  lint-json:
+    name: Lint JSON Files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate all JSON files
+        run: |
+          errors=0
+
+          # Find all JSON files in skills/ and .claude-plugin/
+          for json_file in $(find skills .claude-plugin -name "*.json" 2>/dev/null); do
+            if ! jq empty "$json_file" 2>/dev/null; then
+              echo "Error: Invalid JSON in $json_file"
+              errors=$((errors + 1))
+            fi
+          done
+
+          if [[ $errors -gt 0 ]]; then
+            echo "Found $errors invalid JSON file(s)"
+            exit 1
+          fi
+          echo "✓ All JSON files are valid"
+
+  check-eval-coverage:
+    name: Check Evaluation Coverage
+    runs-on: ubuntu-latest
+    needs: validate-evaluations
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Report evaluation coverage
+        run: |
+          echo "## Evaluation Coverage Report"
+          echo ""
+
+          total_skills=0
+          skills_with_evals=0
+          total_cases=0
+
+          for skill_dir in skills/*/; do
+            skill_name=$(basename "$skill_dir")
+            total_skills=$((total_skills + 1))
+
+            eval_file="$skill_dir/evaluations/evaluation.json"
+            if [[ -f "$eval_file" ]]; then
+              skills_with_evals=$((skills_with_evals + 1))
+              case_count=$(jq '.testCases | length' "$eval_file")
+              total_cases=$((total_cases + case_count))
+              echo "- **$skill_name**: $case_count test cases"
+            else
+              echo "- **$skill_name**: No evaluations"
+            fi
+          done
+
+          echo ""
+          echo "### Summary"
+          echo "- Skills with evaluations: $skills_with_evals / $total_skills"
+          echo "- Total test cases: $total_cases"
+
+          # Warn if any skills lack evaluations
+          if [[ $skills_with_evals -lt $total_skills ]]; then
+            echo ""
+            echo "⚠️ Some skills are missing evaluation definitions"
+          fi
+
+  summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [validate-plugin, validate-evaluations, lint-json, check-eval-coverage]
+    if: always()
+    steps:
+      - name: Check job results
+        run: |
+          echo "## CI Pipeline Results"
+          echo ""
+          echo "| Job | Status |"
+          echo "|-----|--------|"
+          echo "| Validate Plugin | ${{ needs.validate-plugin.result }} |"
+          echo "| Validate Evaluations | ${{ needs.validate-evaluations.result }} |"
+          echo "| Lint JSON | ${{ needs.lint-json.result }} |"
+          echo "| Coverage Report | ${{ needs.check-eval-coverage.result }} |"
+
+          # Fail if any required job failed
+          if [[ "${{ needs.validate-plugin.result }}" == "failure" ]] || \
+             [[ "${{ needs.validate-evaluations.result }}" == "failure" ]] || \
+             [[ "${{ needs.lint-json.result }}" == "failure" ]]; then
+            echo ""
+            echo "❌ Pipeline failed"
+            exit 1
+          fi
+
+          echo ""
+          echo "✅ All checks passed"
