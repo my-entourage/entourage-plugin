@@ -1,0 +1,10 @@
+{
+  "repos": [
+    {
+      "name": "mock-repo",
+      "path": "./mock-repo",
+      "github": "my-entourage/entourage-plugin",
+      "mainBranch": "main"
+    }
+  ]
+}
