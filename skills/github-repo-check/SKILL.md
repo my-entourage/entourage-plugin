@@ -154,24 +154,27 @@ Apply this decision tree to determine component status:
    YES -> Status: Shipped (Very High confidence)
 
 2. PR merged + most recent Actions run passing?
-   YES -> Status: Complete (Very High confidence)
+   YES -> Status: Done (Very High confidence)
 
 3. PR merged to main?
-   YES -> Status: Complete (High confidence)
+   YES -> Status: Done (High confidence)
 
 4. Open PR with approving reviews?
-   YES -> Status: In Progress (High confidence)
+   YES -> Status: In Review (High confidence)
 
-5. Open PR (no reviews or pending)?
+5. Open PR (review requested)?
+   YES -> Status: In Review (Medium confidence)
+
+6. Open PR (no reviews)?
    YES -> Status: In Progress (Medium confidence)
 
-6. GitHub Issue with "in progress" or similar label?
+7. GitHub Issue with "in progress" or similar label?
    YES -> Status: In Progress (Medium confidence)
 
-7. GitHub Issue exists (open)?
-   YES -> Status: Planned (High confidence)
+8. GitHub Issue exists (open)?
+   YES -> Status: Backlog (High confidence)
 
-8. No GitHub evidence found?
+9. No GitHub evidence found?
    -> Status: Unknown
    -> Output: "No GitHub evidence found. Defer to /local-repo-check for local evidence."
 ```
@@ -214,7 +217,7 @@ If API returns 404:
 
 | Repository | Evidence | Status | Confidence |
 |------------|----------|--------|------------|
-| owner/repo | PR #42 merged, CI passing | Complete | Very High |
+| owner/repo | PR #42 merged, CI passing | Done | Very High |
 
 ### GitHub Details
 
@@ -252,9 +255,9 @@ When checking multiple components, output a summary table followed by details:
 
 | Component | Status | Evidence | Source | Confidence |
 |-----------|--------|----------|--------|------------|
-| auth | Complete | PR #42 merged, CI passing | owner/repo | Very High |
-| dashboard | In Progress | PR #48 open, 2 approvals | owner/repo | High |
-| payments | Planned | Issue #52 created | owner/repo | High |
+| auth | Done | PR #42 merged, CI passing | owner/repo | Very High |
+| dashboard | In Review | PR #48 open, 2 approvals | owner/repo | High |
+| payments | Backlog | Issue #52 created | owner/repo | High |
 
 ### Details
 
@@ -274,7 +277,7 @@ When checking multiple components, output a summary table followed by details:
 
 | Repository | Evidence | Status | Confidence |
 |------------|----------|--------|------------|
-| my-entourage/entourage-web | PR #42 merged, CI passing | Complete | Very High |
+| my-entourage/entourage-web | PR #42 merged, CI passing | Done | Very High |
 
 ### GitHub Details
 

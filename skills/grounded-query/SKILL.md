@@ -70,8 +70,8 @@ The team chose Supabase as the primary database, with pgvector for embeddings su
 
 ## Important
 
-- Do NOT claim something is "Complete" or "Done" based only on meeting discussions
-- Distinguish between "discussed" and "implemented"
+- Do NOT claim something is "Done" or "In Progress" based only on meeting discussions
+- Distinguish between "discussed/triage" and "implemented"
 - When in doubt, mark as PARTIAL or NOT FOUND rather than SUPPORTED
 
 ---
