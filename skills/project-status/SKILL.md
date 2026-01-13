@@ -26,6 +26,35 @@ Apply when user asks:
 | `Shipped` | Deployed to production | Deployment evidence from GitHub |
 | `Unknown` | Insufficient evidence | N/A |
 
+---
+
+## Agent Skills as Product Features
+
+Claude Code plugins and agent skills (SKILL.md files) are product features. They serve as executable prompts that define agent behavior.
+
+### Detecting Skill Features
+
+When scanning repositories, also check for:
+```
+skills/*/SKILL.md
+commands/*.md
+.claude/skills/*/SKILL.md
+.claude/commands/*.md
+```
+
+### Skill Status Evidence
+
+| Evidence | Status | Confidence |
+|----------|--------|------------|
+| SKILL.md exists + tests in `evaluations/` | Complete | High |
+| SKILL.md exists (no tests) | In Progress | Medium |
+| Skill mentioned in transcripts only | Discussed | Medium |
+
+Include skills in the component status table with type indicator:
+```
+| grounded-query (skill) | Complete | SKILL.md + evaluations | entourage-plugin | High |
+```
+
 ## Workflow
 
 1. Identify components/features in query
@@ -104,6 +133,34 @@ When this conflict is detected, add a sync note to the output:
 ```
 Info: Local repo may be behind remote. Consider running `git pull`.
 ```
+
+---
+
+## Context Mismatch Detection
+
+After scanning configured repos, check if results suggest misconfiguration:
+
+### Warning Triggers
+
+1. **High Unknown Rate**: >50% of queried components return "Unknown" status
+2. **Transcript Mismatch**: Transcripts mention repo names not in repos.json
+3. **Empty Scans**: Configured repos return no relevant code for any component
+
+### Warning Output
+
+When triggered, add to Notes section:
+```
+Warning: Configured repos may not contain the discussed features.
+- Transcripts mention: entourage-web, entourage-api
+- Configured repos: entourage-plugin
+Consider updating `.entourage/repos.json` to include missing repositories.
+```
+
+### Detection Method
+
+1. After transcript search, extract repo names mentioned (patterns: `entourage-*`, `*-web`, `*-api`)
+2. Compare against repos.json entries
+3. If mismatch detected, include warning in output
 
 ---
 
