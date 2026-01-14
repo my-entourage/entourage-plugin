@@ -101,6 +101,31 @@ Proceed with updates? (y/n)
 
 ### Step 6: Request Confirmation
 
+**Check for auto-confirm mode:**
+
+If `LINEAR_SYNC_AUTO_CONFIRM=1` environment variable is set:
+1. Display one-time warning:
+   ```
+   ⚠️  AUTO-CONFIRM MODE ENABLED
+
+   This will create, modify, and cancel temporary issues in your configured
+   Linear workspace. All test issues will be:
+   - Prefixed with [TEST]
+   - Set to Canceled status after testing
+   - Auto-archived by Linear after the configured period
+
+   Workspace: {workspace_name}
+   Team: {team_id}
+
+   Consider creating a dedicated test workspace if you're concerned about
+   affecting your production workspace.
+
+   Proceed with automated write tests? (y/n)
+   ```
+2. If user confirms, skip per-operation confirmation and proceed to Step 7
+3. If user declines, abort the sync
+
+**Normal mode (no env var):**
 - For any updates: Request explicit confirmation
 - For bulk updates (>3 issues): Require "yes" typed confirmation
 - User can select individual issues to update or skip
@@ -212,6 +237,12 @@ Read Linear settings from `.entourage/repos.json`:
 
 1. **Preferred:** Use Linear MCP (handles OAuth automatically)
 2. **Fallback:** API token from config file
+
+### Environment Variables
+
+| Variable | Purpose |
+|----------|---------|
+| `LINEAR_SYNC_AUTO_CONFIRM=1` | Enables auto-confirm mode for automated testing. Shows one-time warning, then skips per-operation confirmations. |
 
 ---
 

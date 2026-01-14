@@ -271,10 +271,18 @@ run_test_case() {
     local exit_code=0
     local cmd_args=("--plugin-dir" "$PLUGIN_DIR" "--permission-mode" "default" "--no-session-persistence" "--print" "$skill_input")
 
+    # Set skill-specific environment variables
+    local skill_env=""
+    if [[ "$skill_name" == "linear-sync" ]]; then
+        # Enable auto-confirm for write operation tests
+        skill_env="LINEAR_SYNC_AUTO_CONFIRM=1"
+        log_verbose "Setting LINEAR_SYNC_AUTO_CONFIRM=1 for linear-sync tests"
+    fi
+
     # Use timeout if available
     # Run in workdir to ensure proper fixture isolation
     if [[ -n "$TIMEOUT_CMD" ]]; then
-        if (cd "$workdir" && "$TIMEOUT_CMD" "$EVAL_TIMEOUT" "$CLAUDE_CLI" "${cmd_args[@]}") > "$output_file" 2>&1; then
+        if (cd "$workdir" && env $skill_env "$TIMEOUT_CMD" "$EVAL_TIMEOUT" "$CLAUDE_CLI" "${cmd_args[@]}") > "$output_file" 2>&1; then
             output=$(cat "$output_file")
         else
             exit_code=$?
@@ -291,7 +299,7 @@ run_test_case() {
         # No timeout command available - run without timeout
         log_verbose "Warning: No timeout command available, running without timeout"
         # Run in workdir to ensure proper fixture isolation
-        if (cd "$workdir" && "$CLAUDE_CLI" "${cmd_args[@]}") > "$output_file" 2>&1; then
+        if (cd "$workdir" && env $skill_env "$CLAUDE_CLI" "${cmd_args[@]}") > "$output_file" 2>&1; then
             output=$(cat "$output_file")
         else
             output=$(cat "$output_file" 2>/dev/null || echo "")
