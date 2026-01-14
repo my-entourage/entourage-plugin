@@ -1,78 +1,157 @@
-# Linear Check Skill
+# linear-check Skill
 
-Query Linear to verify planning/implementation status of components.
+Queries Linear API to verify planning/implementation status of components/features using issue tracking data.
 
-## Usage
+## Overview
 
-```
-/linear-check <component-name>
-/linear-check auth dashboard payments
+This skill checks Linear for issue tracking evidence to determine component status. It queries:
+
+1. **Issues** - Open, in-progress, completed issues mentioning the component
+2. **Workflow States** - Triage, Backlog, Todo, In Progress, In Review, Done, Canceled
+3. **Assignees** - Who is working on what
+4. **Updates** - Recent activity on issues
+
+## Status Levels
+
+| Status | Evidence Required |
+|--------|-------------------|
+| Done | Issue in completed state |
+| In Review | Issue in started state with "Review" in name |
+| In Progress | Issue in started state |
+| Todo | Issue in unstarted state (scheduled) |
+| Backlog | Issue in backlog state |
+| Triage | Issue in triage state (needs review) |
+| Canceled | Issue in canceled state |
+| Unknown | No Linear issue found |
+
+## When to Use
+
+- Directly: `/linear-check authentication`
+- Automatically invoked by `/project-status` when Linear is configured
+
+## Prerequisites
+
+1. **Linear MCP authenticated** (preferred):
+   ```bash
+   # Check MCP connection
+   claude /mcp
+   ```
+
+2. **Or Linear configuration** in `.entourage/repos.json`:
+   ```json
+   {
+     "linear": {
+       "token": "lin_api_...",
+       "teamId": "TEAM",
+       "workspace": "my-workspace"
+     }
+   }
+   ```
+
+## Testing the Skill
+
+### Running Evaluations
+
+1. Navigate to your context database:
+   ```bash
+   cd ~/my-context
+   ```
+
+2. Start Claude Code with the plugin:
+   ```bash
+   claude --plugin-dir ~/entourage-plugin
+   ```
+
+3. Test directly:
+   ```
+   /linear-check authentication
+   /linear-check user-dashboard payments
+   ```
+
+### Example Test Queries
+
+| Test Case | Query |
+|-----------|-------|
+| Single component | `/linear-check auth` |
+| Multiple components | `/linear-check auth dashboard payments` |
+| Non-existent component | `/linear-check nonexistent-feature` |
+
+### Expected Output Format
+
+```markdown
+## Linear Scan: auth
+
+| Issue | Status | State | Assignee | Last Updated |
+|-------|--------|-------|----------|--------------|
+| TEAM-123 | In Progress | In Progress | @alice | 2025-01-10 |
+
+### Linear Details
+
+**TEAM-123:** "Implement authentication flow"
+- Status: In Progress
+- State: In Progress (started)
+- Assignee: @alice
+- Updated: Jan 10, 2025
+- URL: https://linear.app/my-workspace/issue/TEAM-123
 ```
 
 ## Authentication
 
-This skill supports two authentication methods:
+The skill prefers Linear MCP for authentication. If unavailable, falls back to token in `.entourage/repos.json`:
 
-### 1. Linear MCP (Preferred)
+### Option 1: Linear MCP (Recommended)
 
-Configure the Linear MCP server in your `.mcp.json`:
-
+Configure in `.mcp.json`:
 ```json
 {
   "mcpServers": {
     "linear": {
-      "command": "npx",
-      "args": ["-y", "mcp-remote", "https://mcp.linear.app/sse"]
+      "type": "sse",
+      "url": "https://mcp.linear.app/sse"
     }
   }
 }
 ```
 
-Then run `/mcp` to authenticate via OAuth.
-
-### 2. API Token (Fallback)
-
-Add your Linear API token to `.entourage/repos.json`:
+### Option 2: API Token (Fallback)
 
 ```json
 {
   "linear": {
-    "token": "lin_api_YOUR_TOKEN_HERE",
-    "teamId": "ENT",
-    "workspace": "myentourage"
+    "token": "lin_api_...",
+    "teamId": "TEAM",
+    "workspace": "my-workspace"
   }
 }
 ```
 
 Generate a token at: https://linear.app/settings/api
 
-## Status Mapping
+## Error Handling
 
-| Linear State Type | Linear State | Skill Status |
-|-------------------|--------------|--------------|
-| triage | Triage | Triage |
-| backlog | Backlog | Backlog |
-| unstarted | Todo | Todo |
-| started | In Progress | In Progress |
-| started | In Review | In Review |
-| completed | Done | Done |
-| canceled | * | Canceled |
+| Error | Behavior |
+|-------|----------|
+| MCP not configured, no token | Returns configuration instructions |
+| Authentication failed | Reports token issue |
+| Rate limited | Reports rate limit, suggests try later |
+| Team not found | Reports team not found, check config |
 
-## Output
+## Evaluation Logs
 
-Returns a markdown table with issue details:
+This skill is typically invoked by `/project-status`. Evaluation logs are stored with project-status results:
 
-```markdown
-## Linear Scan: authentication
-
-| Issue | Status | State | Assignee | Last Updated |
-|-------|--------|-------|----------|--------------|
-| ENT-123 | In Progress | In Progress | @alice | 2025-01-10 |
+```
+~/my-context/evaluations/project-status/
 ```
 
-## Integration
+## Test Cases
 
-This skill is typically invoked by `/project-status` to gather Linear evidence alongside GitHub and local repository evidence.
+See `evaluations/evaluation.json` for the full test suite covering:
+- Issue status detection (all workflow states)
+- Multiple issue handling
+- Authentication scenarios (MCP, token fallback)
+- Error handling
+- Multi-component queries
 
 ## See Also
 

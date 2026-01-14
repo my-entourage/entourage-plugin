@@ -52,7 +52,7 @@
       "pendingReason": "Requires mock Linear API response",
       "setup": {
         "config": {
-          "linear": {"teamId": "INVALID", "workspace": "myentourage"}
+          "linear": {"teamId": "INVALID", "workspace": "my-workspace"}
         },
         "description": "Linear API returns team not found"
       },
@@ -69,7 +69,7 @@
       "pendingReason": "Requires actual Linear workspace with issue",
       "setup": {
         "config": {
-          "linear": {"teamId": "ENT", "workspace": "myentourage"}
+          "linear": {"teamId": "TEAM", "workspace": "my-workspace"}
         },
         "description": "Linear has an issue matching 'auth' in In Progress state"
       },
@@ -87,7 +87,7 @@
       "pendingReason": "Requires actual Linear workspace with completed issue",
       "setup": {
         "config": {
-          "linear": {"teamId": "ENT", "workspace": "myentourage"}
+          "linear": {"teamId": "TEAM", "workspace": "my-workspace"}
         },
         "description": "Linear has a completed issue matching 'auth'"
       },
@@ -105,7 +105,7 @@
       "pendingReason": "Requires actual Linear workspace with triage issue",
       "setup": {
         "config": {
-          "linear": {"teamId": "ENT", "workspace": "myentourage"}
+          "linear": {"teamId": "TEAM", "workspace": "my-workspace"}
         },
         "description": "Linear has an issue in Triage state matching 'auth'"
       },
@@ -123,7 +123,7 @@
       "pendingReason": "Requires actual Linear workspace with backlog issue",
       "setup": {
         "config": {
-          "linear": {"teamId": "ENT", "workspace": "myentourage"}
+          "linear": {"teamId": "TEAM", "workspace": "my-workspace"}
         },
         "description": "Linear has an issue in Backlog state matching 'auth'"
       },
@@ -141,7 +141,7 @@
       "pendingReason": "Requires actual Linear workspace",
       "setup": {
         "config": {
-          "linear": {"teamId": "ENT", "workspace": "myentourage"}
+          "linear": {"teamId": "TEAM", "workspace": "my-workspace"}
         },
         "description": "Linear has no issues matching 'nonexistent-component'"
       },
@@ -159,7 +159,7 @@
       "pendingReason": "Requires actual Linear workspace with multiple auth issues",
       "setup": {
         "config": {
-          "linear": {"teamId": "ENT", "workspace": "myentourage"}
+          "linear": {"teamId": "TEAM", "workspace": "my-workspace"}
         },
         "description": "Linear has multiple issues matching 'auth'"
       },
@@ -176,7 +176,7 @@
       "pendingReason": "Requires actual Linear workspace",
       "setup": {
         "config": {
-          "linear": {"teamId": "ENT", "workspace": "myentourage"}
+          "linear": {"teamId": "TEAM", "workspace": "my-workspace"}
         },
         "description": "Check multiple components in single query"
       },
@@ -194,7 +194,7 @@
       "pendingReason": "Requires MCP to be unavailable and token configured",
       "setup": {
         "config": {
-          "linear": {"token": "lin_api_test", "teamId": "ENT", "workspace": "myentourage"}
+          "linear": {"token": "lin_api_test", "teamId": "TEAM", "workspace": "my-workspace"}
         },
         "description": "Linear MCP not configured, using API token fallback"
       },
