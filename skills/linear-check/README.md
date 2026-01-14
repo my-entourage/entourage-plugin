@@ -59,6 +59,10 @@ This skill checks Linear for issue tracking evidence to determine component stat
 
 2. Start Claude Code with the plugin:
    ```bash
+   # From the plugin directory
+   claude --plugin-dir .
+
+   # Or specify the path
    claude --plugin-dir ~/entourage-plugin
    ```
 
