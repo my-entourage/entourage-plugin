@@ -111,8 +111,8 @@ Linear uses a GraphQL API at `https://api.linear.app/graphql`.
 
 **Search issues by component name:**
 ```graphql
-query SearchIssues($query: String!) {
-  issueSearch(query: $query, first: 20) {
+query SearchIssues($term: String!) {
+  searchIssues(term: $term, first: 20) {
     nodes {
       identifier
       title
@@ -153,7 +153,7 @@ curl -X POST https://api.linear.app/graphql \
   -H "Authorization: lin_api_YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "query { issueSearch(query: \"authentication\", first: 20) { nodes { identifier title state { name type } } } }"
+    "query": "query { searchIssues(term: \"authentication\", first: 20) { nodes { identifier title state { name type } } } }"
   }'
 ```
 
