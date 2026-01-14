@@ -1,8 +1,8 @@
 # Linear Check Skill Implementation Handoff
 
 **Date:** 2026-01-14
-**Branch:** `linear-check-claude-code-skill`
-**Status:** Ready for PR Review - Skill Implementation Complete, Testing Pending Merge
+**Branch:** `linear-check-claude-code-skill` (merged to main)
+**Status:** MCP Integration Verified - Skill Invocation Pending Fresh Restart
 
 ## Objective
 
@@ -181,7 +181,8 @@ If Linear MCP is configured, test the MCP tools directly:
 
 **Pending:**
 - [ ] Test API token fallback (requires disabling MCP)
-- [ ] Create PR for review
+- [x] Create PR for review (PR #6 merged 2026-01-14)
+- [ ] Test skill invocation after fresh Claude Code restart
 
 ## Evaluation Test Limitations
 
@@ -279,19 +280,41 @@ Linear MCP tools tested directly to verify integration:
 
 **Note:** The `/linear-check` skill file exists but requires a Claude Code restart to be loaded. MCP tools work correctly and the skill will use these same tools once loaded.
 
-## Next Steps for Testing (Post-Merge)
+## Post-Merge MCP Integration Tests (2026-01-14)
 
-### Why the Skill Isn't Loaded Yet
+After PR #6 was merged, manual tests were run using Linear MCP tools directly to verify the integration works:
 
-The `linear-check` skill exists in `skills/linear-check/SKILL.md` but **doesn't appear in loaded skills** because:
-1. The plugin is loaded from the **current working directory** or via `--plugin-dir`
-2. Skills are discovered at Claude Code startup
-3. This branch hasn't been merged to main yet
+| Test | Query | Expected | Result | Status |
+|------|-------|----------|--------|--------|
+| 1 | "slash command" | ENT-48 (Done) | ENT-48, status: `Done` | **PASS** |
+| 2 | "tech stack" | ENT-50 (Todo) | ENT-50, status: `Todo` | **PASS** |
+| 3 | "context skill" | ENT-49 (Backlog) | ENT-49, status: `Backlog` | **PASS** |
+| 4 | "nonexistent-xyz-999" | No results | `[]` (empty) | **PASS** |
+| 5 | "logger" | Multiple ENT-* | ENT-37, status: `Done` | **PASS** |
 
-### After Merging This PR
+**Result: All 5 MCP integration tests passed.**
 
-1. **Merge PR to main**
-2. **Restart Claude Code** in a directory with this plugin loaded
+### Skill Discovery Issue
+
+The `/linear-check` skill is **not appearing in loaded skills** despite the SKILL.md file existing with correct frontmatter. This is likely because:
+- Skills are discovered at Claude Code startup
+- The plugin was loaded before the skill file was added
+- A fresh restart is needed to re-scan for skills
+
+### Next Action Required
+
+To complete testing, **restart Claude Code** and verify:
+1. `linear-check` appears in `/context` under Skills
+2. `/linear-check slash command` returns ENT-48 with Done status
+
+## Remaining Steps
+
+### Test Skill Invocation (Requires Restart)
+
+PR #6 has been merged. To test the actual skill invocation:
+
+1. **Exit Claude Code completely**
+2. **Restart** in a directory with this plugin loaded
 3. **Verify skill appears** in `/context` output under Skills
 4. **Test skill invocation:**
    ```
