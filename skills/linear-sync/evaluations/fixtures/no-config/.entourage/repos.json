@@ -1,0 +1,8 @@
+{
+  "repos": [
+    {
+      "name": "mock-repo",
+      "path": "./mock-repo"
+    }
+  ]
+}
