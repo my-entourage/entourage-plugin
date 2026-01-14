@@ -1,0 +1,33 @@
+{
+  "tool": "gmail_search_emails",
+  "query": "(auth system) after:2025-10-17 -category:promotions -category:social -category:spam",
+  "response": [
+    {
+      "id": "msg001",
+      "threadId": "thread001",
+      "from": "alice@company.com",
+      "subject": "Auth system design review",
+      "date": "2026-01-10T10:30:00Z",
+      "snippet": "Here's the design doc for the auth system. Please review the OAuth integration approach...",
+      "labels": ["INBOX", "IMPORTANT"]
+    },
+    {
+      "id": "msg002",
+      "threadId": "thread001",
+      "from": "bob@company.com",
+      "subject": "Re: Auth system design review",
+      "date": "2026-01-11T14:20:00Z",
+      "snippet": "Looks good! I have a few questions about the token refresh mechanism...",
+      "labels": ["INBOX"]
+    },
+    {
+      "id": "msg003",
+      "threadId": "thread002",
+      "from": "carol@company.com",
+      "subject": "Auth system implementation timeline",
+      "date": "2026-01-08T09:15:00Z",
+      "snippet": "Team, I've attached the project timeline for the authentication system rollout...",
+      "labels": ["INBOX", "project-timeline"]
+    }
+  ]
+}

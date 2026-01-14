@@ -1,0 +1,5 @@
+{
+  "tool": "gmail_search_emails",
+  "query": "(nonexistent-feature-xyz) after:2025-10-17 -category:promotions -category:social -category:spam",
+  "response": []
+}

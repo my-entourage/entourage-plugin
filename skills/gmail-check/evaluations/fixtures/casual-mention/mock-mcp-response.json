@@ -1,0 +1,16 @@
+{
+  "tool": "gmail_search_emails",
+  "query": "(payment-system) after:2025-10-17 -category:promotions -category:social -category:spam",
+  "response": [
+    {
+      "id": "msg010",
+      "threadId": "thread010",
+      "from": "dave@company.com",
+      "subject": "Q1 roadmap discussion",
+      "date": "2026-01-05T11:00:00Z",
+      "snippet": "In our planning meeting, someone briefly mentioned the payment system as a future item, but we focused on the dashboard redesign...",
+      "labels": ["INBOX"]
+    }
+  ],
+  "note": "This email only casually mentions 'payment system' - it's not the main topic and should NOT be classified as In Progress or Complete evidence"
+}

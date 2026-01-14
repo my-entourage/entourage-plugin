@@ -1,0 +1,303 @@
+{
+  "name": "gmail-check",
+  "description": "Search Gmail for project evidence. Evaluations for the gmail-check skill.",
+  "testCases": [
+    {
+      "id": "emails-found",
+      "name": "Find relevant emails",
+      "category": "capability",
+      "input": "/gmail-check auth system",
+      "status": "pending",
+      "pendingReason": "Requires Gmail MCP; run manually or with mock server",
+      "setup": {
+        "description": "Gmail configured, MCP returns matching emails",
+        "fixture": "fixtures/emails-found",
+        "mockMcp": true
+      },
+      "expectedBehavior": "Returns structured email evidence with summary table",
+      "expectedOutput": {
+        "contains": ["Gmail Evidence", "auth system", "Email Summary"],
+        "format": "table",
+        "hasSection": ["Evidence Summary"]
+      },
+      "passRate": {
+        "target": 0.8,
+        "current": null
+      }
+    },
+    {
+      "id": "no-gmail-config",
+      "name": "Gmail not configured",
+      "category": "regression",
+      "input": "/gmail-check database",
+      "status": "active",
+      "setup": {
+        "description": "No gmail section in repos.json or gmail.enabled is false",
+        "fixture": "fixtures/no-gmail-config"
+      },
+      "expectedBehavior": "Returns helpful message about configuration",
+      "expectedOutput": {
+        "contains": ["not configured", ".entourage/repos.json"],
+        "notContains": ["Error", "exception", "failed", "crash"]
+      },
+      "passRate": {
+        "target": 1.0,
+        "current": null
+      }
+    },
+    {
+      "id": "mcp-unavailable",
+      "name": "Gmail MCP not connected",
+      "category": "regression",
+      "input": "/gmail-check feature",
+      "status": "pending",
+      "pendingReason": "Requires environment where MCP is configured but unavailable",
+      "setup": {
+        "description": "Gmail enabled in config but MCP server not running",
+        "fixture": "fixtures/mcp-unavailable"
+      },
+      "expectedBehavior": "Returns guidance on MCP setup",
+      "expectedOutput": {
+        "contains": ["MCP", "Gmail", "configure"],
+        "notContains": ["Error", "crash", "exception"]
+      },
+      "passRate": {
+        "target": 1.0,
+        "current": null
+      }
+    },
+    {
+      "id": "no-results",
+      "name": "No emails match search",
+      "category": "regression",
+      "input": "/gmail-check nonexistent-feature-xyz",
+      "status": "pending",
+      "pendingReason": "Requires Gmail MCP with empty results",
+      "setup": {
+        "description": "Gmail configured but search returns empty",
+        "fixture": "fixtures/no-results",
+        "mockMcp": true
+      },
+      "expectedBehavior": "Returns informative message about no evidence",
+      "expectedOutput": {
+        "contains": ["No Gmail evidence found", "nonexistent-feature-xyz"],
+        "notContains": ["Error", "exception"]
+      },
+      "passRate": {
+        "target": 1.0,
+        "current": null
+      }
+    },
+    {
+      "id": "hallucination-prevention",
+      "name": "No invented emails",
+      "category": "adversarial",
+      "input": "/gmail-check authentication",
+      "status": "pending",
+      "pendingReason": "Requires Gmail MCP with empty results; verify no fabrication",
+      "setup": {
+        "description": "MCP returns empty results; skill must not invent data",
+        "fixture": "fixtures/no-results",
+        "mockMcp": true
+      },
+      "expectedBehavior": "Returns no evidence without fabricating emails",
+      "expectedOutput": {
+        "notContains": ["from:", "@example.com", "@company.com", "Subject:"],
+        "contains": ["No Gmail evidence"]
+      },
+      "passRate": {
+        "target": 1.0,
+        "current": null
+      }
+    },
+    {
+      "id": "status-inflation-prevention",
+      "name": "Don't overclaim from casual mentions",
+      "category": "adversarial",
+      "input": "/gmail-check payment-system",
+      "status": "pending",
+      "pendingReason": "Requires Gmail MCP with casual mention fixture",
+      "setup": {
+        "description": "Email mentions 'payment' in passing, not as main topic",
+        "fixture": "fixtures/casual-mention",
+        "mockMcp": true
+      },
+      "expectedBehavior": "Classifies as Discussion/mention, not In Progress",
+      "expectedOutput": {
+        "notContains": ["In Progress", "Complete", "Implemented", "Done"],
+        "contains": ["Discussed", "mention"]
+      },
+      "passRate": {
+        "target": 0.9,
+        "current": null
+      }
+    },
+    {
+      "id": "per-repo-filters",
+      "name": "Apply repo-specific Gmail filters",
+      "category": "capability",
+      "input": "/gmail-check my-app features",
+      "status": "pending",
+      "pendingReason": "Requires Gmail MCP with filter-aware search",
+      "setup": {
+        "description": "repos.json has gmailFilters for my-app repo",
+        "fixture": "fixtures/repo-filters"
+      },
+      "expectedBehavior": "Shows that repo-specific filters were applied to query",
+      "expectedOutput": {
+        "contains": ["label:my-app", "from:team@company.com"]
+      },
+      "passRate": {
+        "target": 0.8,
+        "current": null
+      }
+    },
+    {
+      "id": "evidence-classification",
+      "name": "Correctly classify evidence types",
+      "category": "capability",
+      "input": "/gmail-check database migration",
+      "status": "pending",
+      "pendingReason": "Requires Gmail MCP with mixed evidence fixture",
+      "setup": {
+        "description": "Mix of design review, planning doc, and discussion emails",
+        "fixture": "fixtures/mixed-evidence",
+        "mockMcp": true
+      },
+      "expectedBehavior": "Classifies each email by evidence type",
+      "expectedOutput": {
+        "contains": ["Design Review", "Planning", "Discussion"],
+        "hasSection": ["Evidence Summary"]
+      },
+      "passRate": {
+        "target": 0.8,
+        "current": null
+      }
+    },
+    {
+      "id": "output-format-table",
+      "name": "Output contains markdown table",
+      "category": "regression",
+      "input": "/gmail-check auth",
+      "status": "pending",
+      "pendingReason": "Requires Gmail MCP with results",
+      "setup": {
+        "description": "Gmail returns emails; verify table format",
+        "fixture": "fixtures/emails-found",
+        "mockMcp": true
+      },
+      "expectedBehavior": "Output includes properly formatted markdown table",
+      "expectedOutput": {
+        "contains": ["|", "Date", "From", "Subject"],
+        "format": "table"
+      },
+      "passRate": {
+        "target": 1.0,
+        "current": null
+      }
+    },
+    {
+      "id": "search-query-shown",
+      "name": "Shows search query used",
+      "category": "regression",
+      "input": "/gmail-check auth login",
+      "status": "pending",
+      "pendingReason": "Requires Gmail MCP",
+      "setup": {
+        "description": "Verify output shows the Gmail search query used",
+        "fixture": "fixtures/emails-found",
+        "mockMcp": true
+      },
+      "expectedBehavior": "Output includes the search query for transparency",
+      "expectedOutput": {
+        "contains": ["Search Query", "auth", "login"]
+      },
+      "passRate": {
+        "target": 0.9,
+        "current": null
+      }
+    },
+    {
+      "id": "date-range-filtering",
+      "name": "Respects date range from config",
+      "category": "capability",
+      "input": "/gmail-check notifications",
+      "status": "pending",
+      "pendingReason": "Requires Gmail MCP with date filtering",
+      "setup": {
+        "description": "Config has daysBack=90; verify date filter in query",
+        "fixture": "fixtures/emails-found"
+      },
+      "expectedBehavior": "Query includes date filtering based on config",
+      "expectedOutput": {
+        "contains": ["after:"]
+      },
+      "passRate": {
+        "target": 0.8,
+        "current": null
+      }
+    },
+    {
+      "id": "category-exclusion",
+      "name": "Excludes configured categories",
+      "category": "capability",
+      "input": "/gmail-check marketing",
+      "status": "pending",
+      "pendingReason": "Requires Gmail MCP with category exclusions",
+      "setup": {
+        "description": "Config excludes promotions, social; verify exclusion in query",
+        "fixture": "fixtures/emails-found"
+      },
+      "expectedBehavior": "Query excludes spam, promotions, social categories",
+      "expectedOutput": {
+        "contains": ["-category:promotions", "-category:social"]
+      },
+      "passRate": {
+        "target": 0.8,
+        "current": null
+      }
+    },
+    {
+      "id": "multiple-components",
+      "name": "Handle multiple component names",
+      "category": "capability",
+      "input": "/gmail-check auth dashboard payments",
+      "status": "pending",
+      "pendingReason": "Requires Gmail MCP with multiple component searches",
+      "setup": {
+        "description": "Search for multiple components in single invocation",
+        "fixture": "fixtures/emails-found",
+        "mockMcp": true
+      },
+      "expectedBehavior": "Searches for all components and aggregates results",
+      "expectedOutput": {
+        "contains": ["auth", "dashboard", "payments"]
+      },
+      "passRate": {
+        "target": 0.8,
+        "current": null
+      }
+    },
+    {
+      "id": "recommended-status",
+      "name": "Provides recommended status",
+      "category": "capability",
+      "input": "/gmail-check auth",
+      "status": "pending",
+      "pendingReason": "Requires Gmail MCP with results",
+      "setup": {
+        "description": "Gmail returns emails; verify status recommendation",
+        "fixture": "fixtures/emails-found",
+        "mockMcp": true
+      },
+      "expectedBehavior": "Output includes recommended status based on evidence",
+      "expectedOutput": {
+        "contains": ["Recommended Status", "based on"]
+      },
+      "passRate": {
+        "target": 0.8,
+        "current": null
+      }
+    }
+  ]
+}

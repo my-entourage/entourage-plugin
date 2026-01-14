@@ -1,0 +1,43 @@
+{
+  "tool": "gmail_search_emails",
+  "query": "(database migration) after:2025-10-17 -category:promotions -category:social -category:spam",
+  "response": [
+    {
+      "id": "msg020",
+      "threadId": "thread020",
+      "from": "alice@company.com",
+      "subject": "Database migration design review",
+      "date": "2026-01-12T10:00:00Z",
+      "snippet": "Please review the attached schema migration plan. I need feedback on the rollback strategy...",
+      "labels": ["INBOX", "IMPORTANT"]
+    },
+    {
+      "id": "msg021",
+      "threadId": "thread020",
+      "from": "bob@company.com",
+      "subject": "Re: Database migration design review",
+      "date": "2026-01-12T14:30:00Z",
+      "snippet": "The rollback approach looks solid. One question about the data validation step...",
+      "labels": ["INBOX"]
+    },
+    {
+      "id": "msg022",
+      "threadId": "thread021",
+      "from": "carol@company.com",
+      "subject": "Database migration spec v2",
+      "date": "2026-01-09T09:00:00Z",
+      "snippet": "Attached is the updated specification document for the database migration project...",
+      "labels": ["INBOX", "specs"]
+    },
+    {
+      "id": "msg023",
+      "threadId": "thread022",
+      "from": "dave@company.com",
+      "subject": "Weekly standup notes",
+      "date": "2026-01-08T16:00:00Z",
+      "snippet": "Quick update: We discussed the database migration briefly. Also covered sprint planning...",
+      "labels": ["INBOX"]
+    }
+  ],
+  "note": "Mix of evidence types: msg020/021 = Design Review (thread with feedback), msg022 = Planning Document (spec attachment), msg023 = Discussion (casual mention in standup)"
+}
