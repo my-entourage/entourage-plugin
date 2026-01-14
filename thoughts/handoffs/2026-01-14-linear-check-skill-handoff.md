@@ -2,7 +2,7 @@
 
 **Date:** 2026-01-14
 **Branch:** `linear-check-claude-code-skill`
-**Status:** Implementation Complete, MCP Integration Verified
+**Status:** Ready for Review - All Implementation & Testing Complete
 
 ## Objective
 
@@ -24,8 +24,8 @@ Following the same pattern as `/github-repo-check`:
 {
   "linear": {
     "token": "lin_api_...",
-    "teamId": "ENT",
-    "workspace": "myentourage"
+    "teamId": "TEAM",
+    "workspace": "my-workspace"
   }
 }
 ```
@@ -162,20 +162,26 @@ If Linear MCP is configured, test the MCP tools directly:
 
 **Implemented:**
 - [x] `skills/linear-check/SKILL.md` - Skill definition
-- [x] `skills/linear-check/README.md` - Documentation
-- [x] `skills/linear-check/evaluations/evaluation.json` - Test cases
+- [x] `skills/linear-check/README.md` - Full documentation (matches github-repo-check pattern)
+- [x] `skills/linear-check/evaluations/evaluation.json` - 12 test cases
+- [x] `skills/linear-check/evaluations/fixtures/` - Test fixtures (no-config, with-config)
+- [x] `skills/linear-check/evaluations/golden/` - Golden output directory
 - [x] Status hierarchy updated in all skills
 - [x] Linear integration in project-status workflow
 - [x] `.entourage/repos.json` schema updated
+- [x] Main `README.md` updated with Linear Check documentation
+- [x] `skills/project-status/README.md` updated with Linear references
+- [x] All examples generalized (TEAM, my-workspace instead of ENT, myentourage)
 
 **Tested:**
 - [x] Linear MCP integration works (verified 2026-01-14)
 - [x] Issue search returns correct results
 - [x] Status mapping verified for all types
+- [x] Skill invocation works after restart
 
 **Pending:**
-- [ ] Test skill invocation after Claude Code restart (skill not loaded until restart)
-- [ ] Test API token fallback
+- [ ] Test API token fallback (requires disabling MCP)
+- [ ] Create PR for review
 
 ## Test Results (2026-01-14)
 
