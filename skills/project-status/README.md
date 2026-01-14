@@ -1,24 +1,28 @@
 # project-status Skill
 
-Reports implementation status of project components with evidence from transcripts, local repositories, and GitHub.
+Reports implementation status of project components with evidence from transcripts, local repositories, GitHub, and Linear.
 
 ## Overview
 
-This skill provides accurate project status by distinguishing between what was discussed versus what is actually implemented. It combines evidence from three sources:
+This skill provides accurate project status by distinguishing between what was discussed versus what is actually implemented. It combines evidence from four sources:
 
 1. **Transcripts** - Meeting notes, voice memos, messages
 2. **Local repositories** - Code files, tests, git history
 3. **GitHub** - PRs, issues, CI/CD status, deployments
+4. **Linear** - Issue tracking status, workflow states
 
 ## Status Levels
 
 | Status | Definition | Evidence Required |
 |--------|------------|-------------------|
-| Discussed | Mentioned in meetings/messages | Transcript/message reference |
-| Planned | Explicit decisions documented | Decision in transcript + rationale, or GitHub Issue |
+| Triage | Mentioned but needs review | Transcript/message reference |
+| Backlog | Accepted, prioritized for future | Decision documented, or Linear/GitHub Issue |
+| Todo | Scheduled, ready to start | Assigned in Linear or explicitly scheduled |
 | In Progress | Implementation started | Code in repo or open PR |
-| Complete | Working implementation | Code + tests, or merged PR with CI passing |
+| In Review | PR open, awaiting review | Open PR with review requested |
+| Done | Working implementation | Code + tests, or merged PR with CI passing |
 | Shipped | Deployed to production | Deployment evidence from GitHub |
+| Canceled | Explicitly closed | Issue/PR closed as won't fix, duplicate, etc. |
 | Unknown | Insufficient evidence | N/A |
 
 ## Testing the Skill
@@ -32,6 +36,13 @@ This skill provides accurate project status by distinguishing between what was d
 2. Repository configuration (if testing code verification):
    ```json
    {
+     "github": {
+       "defaultOrg": "my-org"
+     },
+     "linear": {
+       "teamId": "TEAM",
+       "workspace": "my-workspace"
+     },
      "repos": [
        {
          "name": "my-project",
@@ -71,9 +82,9 @@ This skill provides accurate project status by distinguishing between what was d
 
 The skill outputs a markdown table with:
 - Component name
-- Status (Discussed/Planned/In Progress/Complete/Shipped/Unknown)
+- Status (Triage/Backlog/Todo/In Progress/In Review/Done/Shipped/Canceled/Unknown)
 - Evidence description
-- Source (Transcripts/Local/GitHub)
+- Source (Transcripts/Local/GitHub/Linear)
 - Confidence level (Low/Medium/High/Very High)
 
 Example:
@@ -82,9 +93,10 @@ Example:
 
 | Component | Status | Evidence | Source | Confidence |
 |-----------|--------|----------|--------|------------|
-| Auth | Complete | PR #42 merged, CI passing | GitHub | Very High |
-| Dashboard | In Progress | Code exists, no tests | Local | Medium |
-| Analytics | Discussed | Mentioned Dec 21 meeting | Transcripts | High |
+| Auth | Shipped | PR #42 merged, deployed | GitHub | Very High |
+| Dashboard | In Progress | ENT-123 In Progress, code exists | Linear + Local | High |
+| Payments | Todo | ENT-456 scheduled | Linear | High |
+| Analytics | Triage | Mentioned Dec 21 meeting | Transcripts | Medium |
 ```
 
 ## Evaluation Logs

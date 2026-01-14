@@ -28,8 +28,7 @@
 
 ## Notes
 
-- No discussion of CI/CD tooling
-- No deployment strategy discussed yet
+- Focus on MVP features first
 - Testing approach to be determined
 
 ## Action Items

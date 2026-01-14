@@ -198,7 +198,8 @@ setup_test_context() {
     local fixture_dir="$SKILLS_DIR/$skill_name/evaluations/fixtures/$case_id"
     if [[ -d "$fixture_dir" ]]; then
         log_verbose "Loading fixtures from $fixture_dir"
-        cp -r "$fixture_dir"/* "$workdir/" 2>/dev/null || true
+        # Use /. to copy all contents including hidden files/directories
+        cp -r "$fixture_dir"/. "$workdir/" 2>/dev/null || true
         return 0
     fi
     return 1
@@ -212,13 +213,23 @@ run_test_case() {
     local case_id
     local case_name
     local input
+    local test_status
 
     case_id=$(echo "$case_json" | jq -r '.id')
     case_name=$(echo "$case_json" | jq -r '.name')
     input=$(echo "$case_json" | jq -r '.input')
     expected=$(echo "$case_json" | jq -c '.expectedOutput')
+    test_status=$(echo "$case_json" | jq -r '.status // "active"')
 
     ((TOTAL_CASES++))
+
+    # Skip tests marked as pending (need fixtures)
+    if [[ "$test_status" == "pending" ]]; then
+        local pending_reason
+        pending_reason=$(echo "$case_json" | jq -r '.pendingReason // "needs fixture"')
+        log_skip "$case_id - $case_name (pending: $pending_reason)"
+        return 0
+    fi
 
     if [[ $DRY_RUN -eq 1 ]]; then
         log_info "Would run: $case_id - $case_name"
@@ -254,13 +265,16 @@ run_test_case() {
     local skill_input="/$skill_name $input"
 
     # Run Claude with the test input (invoke skill properly)
+    # Use --permission-mode default to avoid inheriting plan mode from previous sessions
+    # Use --no-session-persistence to ensure clean state for each test
     local output
     local exit_code=0
-    local cmd_args=("--plugin-dir" "$PLUGIN_DIR" "--print" "$skill_input")
+    local cmd_args=("--plugin-dir" "$PLUGIN_DIR" "--permission-mode" "default" "--no-session-persistence" "--print" "$skill_input")
 
     # Use timeout if available
+    # Run in workdir to ensure proper fixture isolation
     if [[ -n "$TIMEOUT_CMD" ]]; then
-        if "$TIMEOUT_CMD" "$EVAL_TIMEOUT" "$CLAUDE_CLI" "${cmd_args[@]}" > "$output_file" 2>&1; then
+        if (cd "$workdir" && "$TIMEOUT_CMD" "$EVAL_TIMEOUT" "$CLAUDE_CLI" "${cmd_args[@]}") > "$output_file" 2>&1; then
             output=$(cat "$output_file")
         else
             exit_code=$?
@@ -276,7 +290,8 @@ run_test_case() {
     else
         # No timeout command available - run without timeout
         log_verbose "Warning: No timeout command available, running without timeout"
-        if "$CLAUDE_CLI" "${cmd_args[@]}" > "$output_file" 2>&1; then
+        # Run in workdir to ensure proper fixture isolation
+        if (cd "$workdir" && "$CLAUDE_CLI" "${cmd_args[@]}") > "$output_file" 2>&1; then
             output=$(cat "$output_file")
         else
             output=$(cat "$output_file" 2>/dev/null || echo "")

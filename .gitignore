@@ -5,4 +5,8 @@
 tests/results/
 *.eval.log
 
+# Local test fixtures (workspace-specific, never committed)
+# Third parties create their own local-* fixtures for testing
+skills/*/evaluations/fixtures/local-*
+
 thoughts/conversations_claude
