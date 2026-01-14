@@ -388,6 +388,392 @@ https://www.googleapis.com/auth/gmail.send
 
 ---
 
+## Deep Dive: MCP Server Data Schema
+
+### What Third-Party Gmail MCP Servers Actually Pull
+
+The GongRzhe/Gmail-MCP-Server makes these Gmail API calls under the hood:
+
+**API Endpoints Called:**
+```
+users.messages.list()        # Search/list emails
+users.messages.get()         # Full message content
+users.messages.send()        # Send emails
+users.messages.modify()      # Add/remove labels
+users.messages.delete()      # Permanent delete
+users.messages.attachments.get()  # Download attachments
+users.drafts.create()        # Create drafts
+users.labels.list/create/update/delete()
+users.settings.filters.list/create/get/delete()
+```
+
+**OAuth Scopes Requested:**
+```
+https://www.googleapis.com/auth/gmail.modify   # Read + write + labels
+https://www.googleapis.com/auth/gmail.settings.basic  # Filter management
+```
+
+**Data Schema Returned (per message):**
+
+```typescript
+interface GmailMessage {
+  id: string;                    // Message ID
+  threadId: string;              // Thread ID for grouping
+  labelIds: string[];            // ["INBOX", "UNREAD", "Label_123"]
+  snippet: string;               // First ~100 chars preview
+  historyId: string;             // For sync/polling
+  internalDate: string;          // Epoch ms timestamp
+  sizeEstimate: number;          // Bytes
+
+  payload: {
+    mimeType: string;            // "multipart/alternative", "text/plain"
+    headers: [                   // Parsed headers
+      { name: "From", value: "alice@example.com" },
+      { name: "To", value: "bob@example.com" },
+      { name: "Subject", value: "Design Review" },
+      { name: "Date", value: "Mon, 13 Jan 2025 10:00:00 -0800" }
+    ];
+    body: {
+      data: string;              // Base64-encoded content
+      size: number;
+    };
+    parts?: MessagePart[];       // Nested MIME parts for multipart
+  };
+
+  // Only with format=RAW
+  raw?: string;                  // Full RFC 2822 base64url encoded
+}
+
+interface Attachment {
+  attachmentId: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+}
+```
+
+**Credential Storage:**
+- OAuth keys: `~/.gmail-mcp/gcp-oauth.keys.json`
+- Access/refresh tokens: `~/.gmail-mcp/credentials.json`
+- Configurable via env vars: `GMAIL_CREDENTIALS_PATH`, `GMAIL_OAUTH_PATH`
+
+### MCP vs Direct API: Key Differences
+
+| Aspect | Third-Party MCP Server | Direct Gmail API |
+|--------|------------------------|------------------|
+| **Your Code** | None - use npm package | You write & control it |
+| **Credential Flow** | Through their OAuth handler | Your OAuth implementation |
+| **Data Access** | They decode/transform | Raw API response |
+| **Scope Control** | Their choice (often broad) | You choose exactly |
+| **Trust Model** | Trust their code + npm | Trust only Google |
+| **Updates** | They control | You control |
+| **Auditing** | Read their source | Full visibility |
+
+**Privacy Concerns with Third-Party MCP:**
+1. **Code runs locally** - but you're trusting their npm package
+2. **Credentials stored locally** - but their code handles them
+3. **Scopes may be broader than needed** - `gmail.modify` vs `gmail.readonly`
+4. **No transparency** - code can change with `npm update`
+
+---
+
+## Building Your Own Gmail MCP Server (Privacy-First)
+
+### Why Build Your Own
+
+1. **Full code control** - audit every line
+2. **Minimal scopes** - request only `gmail.readonly`
+3. **No npm supply chain risk** - no third-party dependencies for Gmail
+4. **Custom schema** - return only fields you need for Entourage
+
+### Minimal MCP Server Structure
+
+```
+entourage-gmail-mcp/
+├── package.json
+├── tsconfig.json
+├── src/
+│   ├── index.ts          # MCP server entry
+│   ├── gmail-client.ts   # Direct Gmail API wrapper
+│   └── oauth.ts          # OAuth flow handler
+└── README.md
+```
+
+### Dependencies (Minimal)
+
+```json
+{
+  "name": "entourage-gmail-mcp",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "googleapis": "^140.0.0",
+    "zod": "^3.25.0"
+  }
+}
+```
+
+### MCP Server Code (src/index.ts)
+
+```typescript
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { z } from "zod";
+import { GmailClient } from "./gmail-client.js";
+
+const server = new McpServer({
+  name: "entourage-gmail",
+  version: "1.0.0",
+});
+
+const gmail = new GmailClient();
+
+// Tool 1: Search emails (read-only)
+server.tool(
+  "search_emails",
+  {
+    query: z.string().describe("Gmail search query (e.g., 'from:alice subject:design')"),
+    maxResults: z.number().optional().default(10),
+  },
+  async ({ query, maxResults }) => {
+    const results = await gmail.searchMessages(query, maxResults);
+
+    // Return only what Entourage needs - no raw content
+    const simplified = results.map(msg => ({
+      id: msg.id,
+      threadId: msg.threadId,
+      from: msg.from,
+      subject: msg.subject,
+      date: msg.date,
+      snippet: msg.snippet,
+    }));
+
+    return {
+      content: [{
+        type: "text",
+        text: JSON.stringify(simplified, null, 2)
+      }],
+    };
+  }
+);
+
+// Tool 2: Read single email
+server.tool(
+  "read_email",
+  {
+    messageId: z.string().describe("Gmail message ID"),
+  },
+  async ({ messageId }) => {
+    const message = await gmail.getMessage(messageId);
+
+    // Return structured data, not raw API response
+    return {
+      content: [{
+        type: "text",
+        text: JSON.stringify({
+          id: message.id,
+          from: message.from,
+          to: message.to,
+          subject: message.subject,
+          date: message.date,
+          body: message.textPlain,  // Just plain text, not HTML
+          hasAttachments: message.attachments.length > 0,
+        }, null, 2),
+      }],
+    };
+  }
+);
+
+// Start server with stdio transport
+const transport = new StdioServerTransport();
+await server.connect(transport);
+```
+
+### Gmail Client Wrapper (src/gmail-client.ts)
+
+```typescript
+import { google } from "googleapis";
+import { OAuth2Client } from "google-auth-library";
+import * as fs from "fs";
+import * as path from "path";
+
+const SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]; // MINIMAL
+const CREDENTIALS_PATH = path.join(
+  process.env.HOME || "~",
+  ".entourage",
+  "gmail-credentials.json"
+);
+const TOKEN_PATH = path.join(
+  process.env.HOME || "~",
+  ".entourage",
+  "gmail-token.json"
+);
+
+export class GmailClient {
+  private auth: OAuth2Client | null = null;
+  private gmail: any = null;
+
+  async initialize() {
+    if (this.gmail) return;
+
+    const credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH, "utf8"));
+    const { client_id, client_secret, redirect_uris } = credentials.installed;
+
+    this.auth = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
+
+    // Load saved tokens
+    if (fs.existsSync(TOKEN_PATH)) {
+      const token = JSON.parse(fs.readFileSync(TOKEN_PATH, "utf8"));
+      this.auth.setCredentials(token);
+    } else {
+      throw new Error("Gmail not authenticated. Run: npx entourage-gmail-mcp auth");
+    }
+
+    this.gmail = google.gmail({ version: "v1", auth: this.auth });
+  }
+
+  async searchMessages(query: string, maxResults: number = 10) {
+    await this.initialize();
+
+    const res = await this.gmail.users.messages.list({
+      userId: "me",
+      q: query,
+      maxResults,
+    });
+
+    if (!res.data.messages) return [];
+
+    // Batch fetch message metadata (not full content)
+    const messages = await Promise.all(
+      res.data.messages.map((m: any) => this.getMessageMetadata(m.id))
+    );
+
+    return messages;
+  }
+
+  async getMessageMetadata(messageId: string) {
+    await this.initialize();
+
+    const res = await this.gmail.users.messages.get({
+      userId: "me",
+      id: messageId,
+      format: "metadata",  // Only headers, not body
+      metadataHeaders: ["From", "To", "Subject", "Date"],
+    });
+
+    const headers = res.data.payload?.headers || [];
+    const getHeader = (name: string) =>
+      headers.find((h: any) => h.name === name)?.value || "";
+
+    return {
+      id: res.data.id,
+      threadId: res.data.threadId,
+      from: getHeader("From"),
+      to: getHeader("To"),
+      subject: getHeader("Subject"),
+      date: getHeader("Date"),
+      snippet: res.data.snippet,
+    };
+  }
+
+  async getMessage(messageId: string) {
+    await this.initialize();
+
+    const res = await this.gmail.users.messages.get({
+      userId: "me",
+      id: messageId,
+      format: "full",
+    });
+
+    // Parse the complex MIME structure
+    const headers = res.data.payload?.headers || [];
+    const getHeader = (name: string) =>
+      headers.find((h: any) => h.name === name)?.value || "";
+
+    // Extract plain text body
+    const textPlain = this.extractTextPlain(res.data.payload);
+
+    // Get attachment info (not content)
+    const attachments = this.extractAttachmentInfo(res.data.payload);
+
+    return {
+      id: res.data.id,
+      threadId: res.data.threadId,
+      from: getHeader("From"),
+      to: getHeader("To"),
+      subject: getHeader("Subject"),
+      date: getHeader("Date"),
+      textPlain,
+      attachments,
+    };
+  }
+
+  private extractTextPlain(payload: any): string {
+    if (!payload) return "";
+
+    if (payload.mimeType === "text/plain" && payload.body?.data) {
+      return Buffer.from(payload.body.data, "base64").toString("utf8");
+    }
+
+    if (payload.parts) {
+      for (const part of payload.parts) {
+        const text = this.extractTextPlain(part);
+        if (text) return text;
+      }
+    }
+
+    return "";
+  }
+
+  private extractAttachmentInfo(payload: any): Array<{filename: string, mimeType: string, size: number}> {
+    const attachments: any[] = [];
+
+    const traverse = (part: any) => {
+      if (part.filename && part.body?.attachmentId) {
+        attachments.push({
+          filename: part.filename,
+          mimeType: part.mimeType,
+          size: part.body.size || 0,
+        });
+      }
+      if (part.parts) {
+        part.parts.forEach(traverse);
+      }
+    };
+
+    if (payload) traverse(payload);
+    return attachments;
+  }
+}
+```
+
+### Claude Desktop Configuration
+
+```json
+{
+  "mcpServers": {
+    "entourage-gmail": {
+      "command": "node",
+      "args": ["/path/to/entourage-gmail-mcp/dist/index.js"]
+    }
+  }
+}
+```
+
+### Key Privacy Advantages of Your Own MCP
+
+| Feature | Third-Party MCP | Your Own MCP |
+|---------|-----------------|--------------|
+| **OAuth Scope** | `gmail.modify` (read+write) | `gmail.readonly` only |
+| **Data Returned** | Full API response | Only fields you need |
+| **Credential Location** | `~/.gmail-mcp/` (their choice) | `~/.entourage/` (your choice) |
+| **Code Audit** | Must trust npm | You wrote it |
+| **Attack Surface** | npm supply chain | Only googleapis |
+| **Update Control** | Auto-updates risk | You control versions |
+
+---
+
 ## Appendix: Gmail Search Query Examples
 
 ### For Entourage Context
