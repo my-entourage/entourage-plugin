@@ -2,7 +2,7 @@
 
 **Date:** 2026-01-14
 **Branch:** `linear-check-claude-code-skill`
-**Status:** Implementation Complete, Pending Testing
+**Status:** Implementation Complete, MCP Integration Verified
 
 ## Objective
 
@@ -168,10 +168,35 @@ If Linear MCP is configured, test the MCP tools directly:
 - [x] Linear integration in project-status workflow
 - [x] `.entourage/repos.json` schema updated
 
+**Tested:**
+- [x] Linear MCP integration works (verified 2026-01-14)
+- [x] Issue search returns correct results
+- [x] Status mapping verified for all types
+
 **Pending:**
-- [ ] Test skill invocation after Claude Code restart
-- [ ] Verify Linear MCP integration works
+- [ ] Test skill invocation after Claude Code restart (skill not loaded until restart)
 - [ ] Test API token fallback
+
+## Test Results (2026-01-14)
+
+Linear MCP tools tested directly to verify integration:
+
+| Query | Issue Found | Status | Verified |
+|-------|-------------|--------|----------|
+| "tech stack" | ENT-50 | Todo | ✓ |
+| "Linear" | ENT-38 | In Progress | ✓ |
+| "Linear" | ENT-6 | Triage | ✓ |
+| "logging" | ENT-16, ENT-37 | Done | ✓ |
+| Various | ENT-18, ENT-12 | Backlog | ✓ |
+
+**Status types verified:**
+- `Todo` (unstarted) ✓
+- `Backlog` (backlog) ✓
+- `In Progress` (started) ✓
+- `Done` (completed) ✓
+- `Triage` (triage) ✓
+
+**Note:** The `/linear-check` skill file exists but requires a Claude Code restart to be loaded. MCP tools work correctly and the skill will use these same tools once loaded.
 
 ## References
 
