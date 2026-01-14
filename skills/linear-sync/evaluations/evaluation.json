@@ -218,6 +218,71 @@
       "expectedOutput": {
         "contains": ["Updated", "Skipped", "No Match", "Previous", "New", "Evidence"]
       }
+    },
+    {
+      "id": "write-create-issue",
+      "name": "Creates new issue when no match found",
+      "input": "Create a [TEST] issue titled '[TEST] Linear Sync Evaluation - Create' in Triage status, then cancel it",
+      "fixture": "local-entourage",
+      "status": "pending",
+      "pendingReason": "Requires local-* fixture with real Linear workspace config",
+      "expectedBehavior": "Creates [TEST] prefixed issue in Triage, then cancels it for cleanup",
+      "expectedOutput": {
+        "contains": ["Created", "Triage", "[TEST]"],
+        "calls": ["create_issue"]
+      }
+    },
+    {
+      "id": "write-update-status",
+      "name": "Updates issue status based on evidence",
+      "input": "Create a [TEST] issue in Backlog, update its status to In Progress, then cancel it",
+      "fixture": "local-entourage",
+      "status": "pending",
+      "pendingReason": "Requires local-* fixture with real Linear workspace config",
+      "expectedBehavior": "Creates issue, updates status from Backlog to In Progress, then cancels",
+      "expectedOutput": {
+        "contains": ["Updated", "In Progress", "[TEST]"],
+        "calls": ["create_issue", "update_issue"]
+      }
+    },
+    {
+      "id": "write-add-comment",
+      "name": "Adds explanatory comment after update",
+      "input": "Create a [TEST] issue, add a comment 'Test comment from linear-sync evaluation', then cancel the issue",
+      "fixture": "local-entourage",
+      "status": "pending",
+      "pendingReason": "Requires local-* fixture with real Linear workspace config",
+      "expectedBehavior": "Creates issue, adds comment with evidence explanation, then cancels",
+      "expectedOutput": {
+        "contains": ["comment", "[TEST]"],
+        "calls": ["create_issue", "create_comment"]
+      }
+    },
+    {
+      "id": "write-assign-member",
+      "name": "Can assign team member during sync",
+      "input": "Create a [TEST] issue and assign it to me, then cancel it",
+      "fixture": "local-entourage",
+      "status": "pending",
+      "pendingReason": "Requires local-* fixture with real Linear workspace config",
+      "expectedBehavior": "Creates issue and sets assignee, then cancels",
+      "expectedOutput": {
+        "contains": ["Assigned", "[TEST]"],
+        "calls": ["create_issue", "update_issue"]
+      }
+    },
+    {
+      "id": "write-set-due-date",
+      "name": "Can set due date during sync",
+      "input": "Create a [TEST] issue with due date set to tomorrow, then cancel it",
+      "fixture": "local-entourage",
+      "status": "pending",
+      "pendingReason": "Requires local-* fixture with real Linear workspace config",
+      "expectedBehavior": "Creates issue with due date, then cancels",
+      "expectedOutput": {
+        "contains": ["due", "[TEST]"],
+        "calls": ["create_issue"]
+      }
     }
   ]
 }

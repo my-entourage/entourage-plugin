@@ -233,6 +233,62 @@ validate_not_contains() {
     return $failures
 }
 
+# Check if output indicates specific MCP tools were called
+# Usage: check_calls "$output" '["list_issues", "create_issue"]'
+# Verifies output contains evidence the tools were invoked
+check_calls() {
+    local output="$1"
+    local calls_json="$2"
+    local failures=0
+
+    # Parse JSON array and check each tool
+    while IFS= read -r tool; do
+        [[ -z "$tool" ]] && continue
+        case "$tool" in
+            "list_issues"|"get_issue")
+                # Read operations - look for issue data in output
+                if ! echo "$output" | grep -qiE "(ENT-[0-9]+|TEAM-[0-9]+|issue|Linear)"; then
+                    echo "  No evidence of $tool call" >&2
+                    ((failures++))
+                fi
+                ;;
+            "list_issue_statuses")
+                # Look for workflow states mentioned
+                if ! echo "$output" | grep -qiE "(Triage|Backlog|Todo|In Progress|Done)"; then
+                    echo "  No evidence of $tool call" >&2
+                    ((failures++))
+                fi
+                ;;
+            "create_issue")
+                # Look for issue creation evidence
+                if ! echo "$output" | grep -qiE "(created.*ENT-|created.*TEAM-|issue.*created|Created.*issue|\[TEST\])"; then
+                    echo "  No evidence of $tool call" >&2
+                    ((failures++))
+                fi
+                ;;
+            "update_issue")
+                # Look for update evidence
+                if ! echo "$output" | grep -qiE "(updated|status.*changed|→.*Done|→.*Progress|changed.*to)"; then
+                    echo "  No evidence of $tool call" >&2
+                    ((failures++))
+                fi
+                ;;
+            "create_comment")
+                # Look for comment creation evidence
+                if ! echo "$output" | grep -qiE "(added.*comment|comment.*added|commented)"; then
+                    echo "  No evidence of $tool call" >&2
+                    ((failures++))
+                fi
+                ;;
+            *)
+                # Unknown tool - skip without failing
+                ;;
+        esac
+    done < <(echo "$calls_json" | jq -r '.[]' 2>/dev/null)
+
+    return $failures
+}
+
 # Compare output against a golden file
 # Usage: compare_golden "$output" "/path/to/golden.md"
 # Returns 0 if similar enough, 1 if significantly different
@@ -407,6 +463,13 @@ grade_test_case() {
         fi
     fi
 
+    # Check calls if specified (MCP tool invocation evidence)
+    local calls
+    calls=$(echo "$expected_json" | jq -c '.calls // []')
+    if [[ "$calls" != "[]" && "$calls" != "null" ]]; then
+        check_calls "$output" "$calls" || ((failures+=$?))
+    fi
+
     return $failures
 }
 
@@ -421,6 +484,7 @@ export -f check_status
 export -f check_confidence
 export -f check_evidence_status
 export -f check_has_source
+export -f check_calls
 export -f validate_contains
 export -f validate_not_contains
 export -f compare_golden
