@@ -2,76 +2,48 @@
 
 **Date:** 2026-01-14
 **Status:** Draft
-**Related Research:** `thoughts/research/2026-01-14-gmail-integration-research.md`
+**Related:**
+- `thoughts/plans/2026-01-14-gmail-mcp-implementation-plan.md` (MCP server)
+- `thoughts/research/2026-01-14-gmail-integration-research.md`
 
 ---
 
 ## Executive Summary
 
-This plan outlines how to add Gmail integration to Entourage for pulling email evidence into context databases. Based on analysis of the existing architecture and the official [Notion MCP Server](https://github.com/makenotion/notion-mcp-server) pattern, I recommend a **hybrid approach**:
+This plan covers implementing the `/gmail-check` skill in `entourage-plugin` for pulling email evidence into project status assessments. The skill is **MCP-agnostic**—it works with any Gmail MCP server that provides the expected tools.
 
-1. **`/gmail-check` skill** in `entourage-plugin` (matches existing patterns)
-2. **`entourage-gmail-mcp`** as a separate, privacy-first MCP server repo
-3. **Configuration extension** to `.entourage/repos.json`
+**Approach:** Eval-driven development following [Anthropic's "Demystifying Evals for AI Agents"](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) guidance.
 
 ---
 
-## Decision: Where Should Gmail Live?
-
-### Options Evaluated
-
-| Option | Description | Pros | Cons |
-|--------|-------------|------|------|
-| **A: Skill Only** | `/gmail-check` in entourage-plugin, uses third-party MCP | Fast, no new repos | Trust third-party code |
-| **B: Skill + Custom MCP** | Skill in plugin, own MCP server in separate repo | Privacy control, modular | Two repos to maintain |
-| **C: Context Extractor Repo** | New `entourage-extractors` repo with Gmail, Notion, etc. | Centralized extractors | Different pattern from skills |
-| **D: All-in-One** | MCP server code directly in entourage-plugin | Single repo | Bloats plugin with Node.js |
-
-### Recommendation: Option B (Skill + Custom MCP)
-
-**Rationale:**
-1. Skills are markdown-only (no code) - matches existing pattern
-2. MCP server needs TypeScript/Node.js - doesn't fit in plugin
-3. Follows Notion's model: official MCP server ([makenotion/notion-mcp-server](https://github.com/makenotion/notion-mcp-server)) is separate from integrations
-4. Privacy-first: user controls their own Gmail MCP with minimal scopes
-5. Modular: skill works with any Gmail MCP (ours or third-party)
-
----
-
-## Architecture Overview
+## Architecture Context
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    entourage-plugin                             │
-│  ┌─────────────────┐  ┌──────────────────┐  ┌───────────────┐  │
-│  │ /project-status │  │ /github-repo-    │  │ /gmail-check  │  │
-│  │   (orchestrator)│  │    check         │  │   (NEW)       │  │
-│  └────────┬────────┘  └────────┬─────────┘  └───────┬───────┘  │
-│           │                    │                    │           │
-│           │  invokes skills    │                    │           │
-│           ▼                    ▼                    ▼           │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │                  .entourage/repos.json                     │ │
-│  │  { github: {...}, gmail: {...}, repos: [...] }             │ │
-│  └────────────────────────────────────────────────────────────┘ │
+│                    User's MCP Configuration                      │
+│  - Any Gmail MCP that provides: gmail_search_emails,            │
+│    gmail_read_email, gmail_list_labels                          │
 └─────────────────────────────────────────────────────────────────┘
-                              │
-              ┌───────────────┼───────────────┐
-              │               │               │
-              ▼               ▼               ▼
-        ┌──────────┐   ┌───────────┐   ┌──────────────────┐
-        │ gh CLI   │   │ Gmail MCP │   │ Local filesystem │
-        │ (GitHub) │   │  Server   │   │    (git repos)   │
-        └──────────┘   └─────┬─────┘   └──────────────────┘
-                             │
-                             ▼
-              ┌──────────────────────────────┐
-              │    entourage-gmail-mcp       │
-              │  (separate repo, optional)   │
-              │  - gmail.readonly scope only │
-              │  - privacy-first design      │
-              └──────────────────────────────┘
+                               │
+                    MCP provides tools
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    entourage-plugin                              │
+│  ┌─────────────────┐  ┌──────────────────┐  ┌───────────────┐   │
+│  │ /project-status │  │ /github-repo-    │  │ /gmail-check  │   │
+│  │   (orchestrator)│  │    check         │  │   (NEW)       │   │
+│  └────────┬────────┘  └────────┬─────────┘  └───────┬───────┘   │
+│           │                    │                    │            │
+│           ▼                    ▼                    ▼            │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │                  .entourage/repos.json                     │  │
+│  │  { github: {...}, gmail: {...}, repos: [...] }             │  │
+│  └────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
 ```
+
+**Key Principle:** Skills reference MCP tools by **tool name** (`gmail_search_emails`), not server name. This allows users to configure MCPs however they prefer.
 
 ---
 
@@ -87,12 +59,6 @@ This plan outlines how to add Gmail integration to Entourage for pulling email e
   },
   "gmail": {
     "enabled": true,
-    "method": "mcp",
-    "mcp": {
-      "server": "entourage-gmail",
-      "command": "node",
-      "args": ["/path/to/entourage-gmail-mcp/dist/index.js"]
-    },
     "searchDefaults": {
       "maxResults": 20,
       "daysBack": 90,
@@ -115,47 +81,10 @@ This plan outlines how to add Gmail integration to Entourage for pulling email e
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `gmail.enabled` | boolean | No | Enable/disable Gmail integration |
-| `gmail.method` | enum | No | `"mcp"` or `"api"` (future) |
-| `gmail.mcp.server` | string | No | MCP server name for Claude config |
-| `gmail.mcp.command` | string | No | Command to run MCP server |
-| `gmail.mcp.args` | array | No | Arguments for MCP server |
 | `gmail.searchDefaults.maxResults` | number | No | Max emails per search (default: 20) |
 | `gmail.searchDefaults.daysBack` | number | No | Search window in days (default: 90) |
 | `gmail.searchDefaults.excludeCategories` | array | No | Gmail categories to exclude |
 | `repos[].gmailFilters` | array | No | Per-repo Gmail search filters |
-
-### Example Configuration Template
-
-Add to `examples/repos.json.example`:
-
-```json
-{
-  "github": {
-    "token": "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-    "defaultOrg": "my-org"
-  },
-  "gmail": {
-    "enabled": true,
-    "method": "mcp",
-    "mcp": {
-      "server": "entourage-gmail"
-    },
-    "searchDefaults": {
-      "maxResults": 20,
-      "daysBack": 90
-    }
-  },
-  "repos": [
-    {
-      "name": "my-web-app",
-      "path": "~/Documents/code/my-web-app",
-      "mainBranch": "main",
-      "github": "my-org/my-web-app",
-      "gmailFilters": ["label:web-app-project"]
-    }
-  ]
-}
-```
 
 ---
 
@@ -168,14 +97,16 @@ skills/gmail-check/
 ├── SKILL.md              # Main skill definition
 ├── README.md             # User documentation
 └── evaluations/
-    ├── evaluation.json   # Test cases
+    ├── evaluation.json   # Test cases (assertion-based)
     └── fixtures/
         ├── emails-found/
         │   ├── .entourage/repos.json
-        │   └── mock-mcp-response.json
+        │   └── expected-output.md
         ├── no-gmail-config/
         │   └── .entourage/repos.json
-        └── auth-failed/
+        ├── mcp-unavailable/
+        │   └── .entourage/repos.json
+        └── no-results/
             └── .entourage/repos.json
 ```
 
@@ -189,38 +120,36 @@ description: Search Gmail for evidence about project components. Returns email t
 
 ## Purpose
 
-Search Gmail for email evidence related to project components and features. This skill queries Gmail via MCP server to find discussions, design reviews, and planning emails that contribute to implementation status.
+Search Gmail for email evidence related to project components and features. This skill queries Gmail via MCP to find discussions, design reviews, and planning emails that contribute to implementation status.
+
+## MCP Tools Used
+
+- `gmail_search_emails` - Search Gmail with query syntax
+- `gmail_read_email` - Get full email content (optional, for deep inspection)
+- `gmail_list_labels` - List available labels for filtering
 
 ## Prerequisites
 
-1. Gmail MCP server configured in Claude Desktop/Code
+1. Gmail MCP server configured (any compatible MCP)
 2. `.entourage/repos.json` with `gmail.enabled: true`
 3. OAuth authentication completed for Gmail MCP
 
 ## Workflow
 
-### Step 1: Check Gmail Configuration
+### Step 1: Check Configuration
 
 Read `.entourage/repos.json` and verify:
 - `gmail.enabled` is `true`
-- `gmail.method` is configured (default: `"mcp"`)
 
-If Gmail is not configured, return:
-```
-Gmail integration not configured.
+If Gmail is not configured, return setup instructions.
 
-To enable Gmail search, add to .entourage/repos.json:
-{
-  "gmail": {
-    "enabled": true,
-    "method": "mcp"
-  }
-}
+### Step 2: Verify MCP Availability
 
-And configure Gmail MCP server in Claude settings.
-```
+Check if `gmail_search_emails` tool is available.
 
-### Step 2: Build Search Query
+If MCP not found, return helpful guidance on MCP setup.
+
+### Step 3: Build Search Query
 
 For each component/feature name provided:
 
@@ -230,33 +159,12 @@ For each component/feature name provided:
 4. Build Gmail search query:
 
 ```
-({component_name}) after:{days_back} -category:promotions -category:social
+({component_name}) after:{date} -category:promotions -category:social
 ```
 
-**Example queries:**
-```
-(auth system) after:2025/10/01 -category:promotions
-(database migration) has:attachment after:2025/10/01
-subject:(review OR feedback) (payment flow) after:2025/10/01
-```
+### Step 4: Execute Search
 
-### Step 3: Execute Gmail Search
-
-Use the MCP tool `search_emails` with the constructed query:
-
-```
-search_emails query="{gmail_query}" maxResults={max_results}
-```
-
-### Step 4: Process Results
-
-For each email returned, extract:
-- `id` - Message ID (for read_email if needed)
-- `threadId` - Thread grouping
-- `from` - Sender email/name
-- `subject` - Email subject
-- `date` - Date sent
-- `snippet` - Preview text
+Call `gmail_search_emails` with the constructed query.
 
 ### Step 5: Classify Evidence
 
@@ -272,7 +180,7 @@ Determine evidence type based on email characteristics:
 
 ### Step 6: Output Format
 
-Return a structured markdown table:
+Return structured markdown:
 
 ```markdown
 ## Gmail Evidence: {Component Name}
@@ -286,15 +194,6 @@ Return a structured markdown table:
 | Date | From | Subject | Type | Relevance |
 |------|------|---------|------|-----------|
 | 2025-01-10 | alice@co.com | Auth design review | Review | High |
-| 2025-01-08 | bob@co.com | Re: Login flow | Discussion | Medium |
-
-### Key Evidence
-
-**Highest Relevance Email:**
-- **From:** {sender}
-- **Date:** {date}
-- **Subject:** {subject}
-- **Snippet:** "{snippet_text}"
 
 ### Evidence Summary
 
@@ -302,41 +201,34 @@ Return a structured markdown table:
 |---------------|-------|-----------------|
 | Design Reviews | 2 | In Progress |
 | Planning Docs | 1 | Planned |
-| Discussions | 3 | Discussed |
 
 **Recommended Status:** {status} (based on {evidence_type})
 ```
 
 ## Error Handling
 
-### No Gmail Configuration
+### Gmail Not Configured
 ```
-⚠️ Gmail not configured in .entourage/repos.json
+Gmail integration not configured.
 
-Add gmail section to enable email evidence gathering.
-See: examples/repos.json.example
-```
+Add to .entourage/repos.json:
+{
+  "gmail": { "enabled": true }
+}
 
-### MCP Server Not Available
-```
-⚠️ Gmail MCP server not responding
-
-Verify Gmail MCP is configured in Claude settings:
-1. Check claude_desktop_config.json has gmail server
-2. Run authentication if needed: npx entourage-gmail-mcp auth
+And configure a Gmail MCP server in Claude settings.
 ```
 
-### Authentication Failed
+### MCP Not Available
 ```
-⚠️ Gmail authentication failed
+Gmail MCP tools not found.
 
-Re-authenticate with Gmail:
-1. Run: npx entourage-gmail-mcp auth
-2. Complete OAuth flow in browser
-3. Retry search
+Verify Gmail MCP is configured:
+1. Check ~/.claude.json or .mcp.json has a Gmail MCP server
+2. Restart Claude Code to load MCP changes
 ```
 
-### No Results Found
+### No Results
 ```
 No Gmail evidence found for: {component_name}
 
@@ -344,95 +236,13 @@ Searched: {query}
 Date range: last {days} days
 Suggestion: Try broader search terms or extend date range
 ```
-
-## Integration with /project-status
-
-When invoked by `/project-status`, this skill returns evidence that contributes to the unified status hierarchy:
-
-- **Gmail design review** → contributes to "In Progress"
-- **Gmail with spec attachment** → contributes to "Planned"
-- **Gmail simple mention** → contributes to "Discussed"
-
-The `/project-status` skill combines Gmail evidence with:
-1. Transcript evidence (highest for "Discussed")
-2. Local repo evidence (code, tests)
-3. GitHub evidence (PRs, issues, deployments)
 ```
 
 ---
 
-## Component 3: `entourage-gmail-mcp` Repository
+## Component 3: Update `/project-status` Skill
 
-### Repository Structure
-
-```
-entourage-gmail-mcp/
-├── package.json
-├── tsconfig.json
-├── README.md
-├── src/
-│   ├── index.ts              # MCP server entry point
-│   ├── gmail-client.ts       # Gmail API wrapper
-│   ├── oauth.ts              # OAuth flow handler
-│   └── tools/
-│       ├── search-emails.ts  # search_emails tool
-│       └── read-email.ts     # read_email tool
-├── scripts/
-│   └── auth.ts               # CLI auth command
-└── docs/
-    └── setup.md              # Setup instructions
-```
-
-### Key Design Principles
-
-1. **Minimal Scope:** Request only `gmail.readonly` (not `gmail.modify`)
-2. **Local Credentials:** Store in `~/.entourage/gmail-token.json`
-3. **Filtered Output:** Return only needed fields (no raw API dump)
-4. **No Third-Party Dependencies:** Only `googleapis` + `@modelcontextprotocol/sdk`
-
-### MCP Tools Provided
-
-| Tool | Description | Parameters |
-|------|-------------|------------|
-| `search_emails` | Search Gmail with query | `query`, `maxResults` |
-| `read_email` | Get full email content | `messageId` |
-| `list_labels` | List Gmail labels | none |
-
-### Package.json
-
-```json
-{
-  "name": "entourage-gmail-mcp",
-  "version": "1.0.0",
-  "description": "Privacy-first Gmail MCP server for Entourage",
-  "type": "module",
-  "bin": {
-    "entourage-gmail-mcp": "./dist/cli.js"
-  },
-  "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "auth": "node dist/scripts/auth.js"
-  },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
-    "googleapis": "^140.0.0",
-    "zod": "^3.25.0"
-  },
-  "devDependencies": {
-    "@types/node": "^20.0.0",
-    "typescript": "^5.0.0"
-  }
-}
-```
-
----
-
-## Component 4: Update `/project-status` Skill
-
-### Changes Required
-
-Add Gmail as a fourth evidence source in the `/project-status` SKILL.md:
+Add Gmail as a fourth evidence source:
 
 ```markdown
 ## Evidence Sources
@@ -444,8 +254,6 @@ Add Gmail as a fourth evidence source in the `/project-status` SKILL.md:
 
 ## Workflow Update
 
-...
-
 ### Step 4: Gather Gmail Evidence (NEW)
 
 If `.entourage/repos.json` has `gmail.enabled: true`:
@@ -456,62 +264,89 @@ If `.entourage/repos.json` has `gmail.enabled: true`:
    - Design review emails → "In Progress" evidence
    - Spec attachments → "Planned" evidence
    - Simple mentions → "Discussed" evidence
-
-...
 ```
 
 ---
 
-## Implementation Phases
+## Eval-Driven Development
 
-### Phase 1: Skill Foundation (1-2 days)
+Following [Anthropic's guidance](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents), we adopt eval-driven development:
 
-**Tasks:**
-- [ ] Create `skills/gmail-check/` directory structure
-- [ ] Write SKILL.md with full workflow
-- [ ] Add configuration schema to examples/repos.json.example
-- [ ] Create basic evaluation.json with test cases
-- [ ] Update `/project-status` to reference `/gmail-check`
+### Core Principles
 
-**Deliverables:**
-- `/gmail-check` skill that works with any Gmail MCP server
-- Configuration documentation
+1. **Start with 20-50 tasks from real failures** — Not hypothetical scenarios
+2. **Grade outcomes, not paths** — Allow different valid approaches
+3. **Code-based graders first** — Fast, deterministic, CI-friendly
+4. **Multiple trials for non-determinism** — Use pass@k metrics
+5. **Reference solutions validate graders** — Prove tasks are solvable
 
-### Phase 2: Custom MCP Server (3-5 days)
+### Evaluation Categories
 
-**Tasks:**
-- [ ] Create `entourage-gmail-mcp` repository
-- [ ] Implement `search_emails` tool with minimal scope
-- [ ] Implement `read_email` tool
-- [ ] Add OAuth CLI authentication flow
-- [ ] Write setup documentation
-- [ ] Test with Claude Desktop
+#### Capability Evals (New Features)
 
-**Deliverables:**
-- Privacy-first Gmail MCP server
-- npm package: `entourage-gmail-mcp`
+Test whether the skill can accomplish the intended task:
 
-### Phase 3: Integration & Testing (2-3 days)
+| ID | Name | Purpose | Expected Pass Rate |
+|----|------|---------|-------------------|
+| `emails-found` | Find relevant emails | Core functionality | Start low, improve |
+| `multiple-components` | Handle multiple search terms | Scaling | 80%+ target |
+| `per-repo-filters` | Apply repo-specific filters | Config respect | 80%+ target |
 
-**Tasks:**
-- [ ] Create evaluation fixtures for `/gmail-check`
-- [ ] Test end-to-end with `/project-status`
-- [ ] Add error handling for edge cases
-- [ ] Document full setup flow
+#### Regression Evals (Stability)
 
-**Deliverables:**
-- Complete test coverage
-- User documentation
+Prevent breaking existing functionality:
 
-### Phase 4: Future Enhancements (Optional)
+| ID | Name | Purpose | Expected Pass Rate |
+|----|------|---------|-------------------|
+| `no-gmail-config` | Graceful when disabled | Error handling | 100% |
+| `mcp-unavailable` | Helpful when MCP missing | Error handling | 100% |
+| `no-results` | Informative when empty | Edge case | 100% |
 
-- [ ] Add `notion-check` skill following same pattern
-- [ ] Add Slack MCP integration
-- [ ] Create `entourage-extractors` meta-package
+#### Adversarial Evals (Robustness)
 
----
+Test failure modes and edge cases:
 
-## Evaluation Test Cases
+| ID | Name | Purpose | Expected Pass Rate |
+|----|------|---------|-------------------|
+| `hallucination-prevention` | Don't invent emails | Safety | 100% |
+| `status-inflation` | Don't overclaim from mentions | Accuracy | 90%+ |
+| `malformed-config` | Handle bad repos.json | Resilience | 100% |
+
+### Grading Strategy
+
+#### Layer 1: Code-Based Graders (Primary)
+
+```json
+{
+  "id": "emails-found",
+  "expectedOutput": {
+    "contains": ["Gmail Evidence", "Email Summary", "|"],
+    "notContains": ["Error", "failed", "exception"],
+    "format": "table"
+  }
+}
+```
+
+**Assertion Types:**
+- `contains` — Required strings in output
+- `notContains` — Prohibited strings
+- `format` — Expected structure (table, list, etc.)
+- `hasSection` — Required markdown sections
+
+#### Layer 2: LLM-Based Graders (Future)
+
+For nuanced quality assessment:
+
+```json
+{
+  "id": "emails-found",
+  "rubric": {
+    "relevance": "Are the emails related to the search query?",
+    "classification": "Are evidence types correctly identified?",
+    "completeness": "Does output include all required sections?"
+  }
+}
+```
 
 ### evaluation.json
 
@@ -523,99 +358,318 @@ If `.entourage/repos.json` has `gmail.enabled: true`:
     {
       "id": "emails-found",
       "name": "Find relevant emails",
+      "category": "capability",
       "input": "/gmail-check auth system",
       "setup": {
-        "description": "Gmail configured with matching emails",
-        "mockMcpResponse": "fixtures/emails-found/mock-mcp-response.json"
+        "description": "Gmail configured, MCP returns matching emails",
+        "fixture": "fixtures/emails-found",
+        "mockMcp": true
       },
       "expectedOutput": {
-        "contains": ["Gmail Evidence", "auth system", "From", "Subject"],
-        "format": "table"
+        "contains": ["Gmail Evidence", "auth system", "Email Summary"],
+        "format": "table",
+        "hasSection": ["Evidence Summary"]
+      },
+      "passRate": {
+        "target": 0.8,
+        "current": null
       }
     },
     {
-      "id": "no-config",
+      "id": "no-gmail-config",
       "name": "Gmail not configured",
+      "category": "regression",
       "input": "/gmail-check database",
       "setup": {
-        "description": "No gmail section in repos.json"
+        "description": "No gmail section in repos.json",
+        "fixture": "fixtures/no-gmail-config"
       },
       "expectedOutput": {
-        "contains": ["not configured", "gmail.enabled"],
+        "contains": ["not configured", ".entourage/repos.json"],
+        "notContains": ["Error", "exception", "failed"]
+      },
+      "passRate": {
+        "target": 1.0,
+        "current": null
+      }
+    },
+    {
+      "id": "mcp-unavailable",
+      "name": "Gmail MCP not connected",
+      "category": "regression",
+      "input": "/gmail-check feature",
+      "setup": {
+        "description": "Gmail enabled but MCP server not running",
+        "fixture": "fixtures/mcp-unavailable"
+      },
+      "expectedOutput": {
+        "contains": ["MCP", "Gmail", "configure"],
         "notContains": ["Error", "crash"]
+      },
+      "passRate": {
+        "target": 1.0,
+        "current": null
       }
     },
     {
       "id": "no-results",
       "name": "No emails match search",
-      "input": "/gmail-check nonexistent-feature",
+      "category": "regression",
+      "input": "/gmail-check nonexistent-feature-xyz",
       "setup": {
-        "description": "Gmail configured but no matching emails"
+        "description": "Gmail configured but search returns empty",
+        "fixture": "fixtures/no-results",
+        "mockMcp": true
       },
       "expectedOutput": {
-        "contains": ["No Gmail evidence found", "nonexistent-feature"],
-        "status": "Unknown"
+        "contains": ["No Gmail evidence found", "nonexistent-feature-xyz"],
+        "notContains": ["Error"]
+      },
+      "passRate": {
+        "target": 1.0,
+        "current": null
+      }
+    },
+    {
+      "id": "hallucination-prevention",
+      "name": "No invented emails",
+      "category": "adversarial",
+      "input": "/gmail-check authentication",
+      "setup": {
+        "description": "MCP returns empty results; skill must not invent data",
+        "fixture": "fixtures/no-results",
+        "mockMcp": true
+      },
+      "expectedOutput": {
+        "notContains": ["from:", "@", "Subject:"],
+        "contains": ["No Gmail evidence"]
+      },
+      "passRate": {
+        "target": 1.0,
+        "current": null
+      }
+    },
+    {
+      "id": "status-inflation-prevention",
+      "name": "Don't overclaim from casual mentions",
+      "category": "adversarial",
+      "input": "/gmail-check payment-system",
+      "setup": {
+        "description": "Email mentions 'payment' in passing, not as main topic",
+        "fixture": "fixtures/casual-mention",
+        "mockMcp": true
+      },
+      "expectedOutput": {
+        "notContains": ["In Progress", "Complete", "Implemented"],
+        "contains": ["Discussed", "mention"]
+      },
+      "passRate": {
+        "target": 0.9,
+        "current": null
+      }
+    },
+    {
+      "id": "per-repo-filters",
+      "name": "Apply repo-specific Gmail filters",
+      "category": "capability",
+      "input": "/gmail-check my-app features",
+      "setup": {
+        "description": "repos.json has gmailFilters for my-app",
+        "fixture": "fixtures/repo-filters"
+      },
+      "expectedOutput": {
+        "contains": ["label:my-app", "from:team@company.com"]
+      },
+      "passRate": {
+        "target": 0.8,
+        "current": null
+      }
+    },
+    {
+      "id": "evidence-classification",
+      "name": "Correctly classify evidence types",
+      "category": "capability",
+      "input": "/gmail-check database migration",
+      "setup": {
+        "description": "Mix of design review, planning doc, and discussion emails",
+        "fixture": "fixtures/mixed-evidence",
+        "mockMcp": true
+      },
+      "expectedOutput": {
+        "contains": ["Design Review", "Planning", "Discussion"],
+        "hasSection": ["Evidence Summary"]
+      },
+      "passRate": {
+        "target": 0.8,
+        "current": null
       }
     }
   ]
 }
 ```
 
+### Pass@k Strategy
+
+For non-deterministic outputs, run multiple trials:
+
+```bash
+# Run each test case 3 times
+./tests/run.sh gmail-check --trials 3
+
+# pass@1: Probability of success on first try
+# pass@3: Probability of at least one success in 3 tries
+```
+
+**Target Metrics:**
+- Regression evals: pass@1 = 100%
+- Capability evals: pass@3 = 80%+
+- Adversarial evals: pass@1 = 90%+
+
+### Test Fixtures
+
+#### fixtures/emails-found/.entourage/repos.json
+
+```json
+{
+  "gmail": {
+    "enabled": true,
+    "searchDefaults": {
+      "maxResults": 20,
+      "daysBack": 90
+    }
+  },
+  "repos": []
+}
+```
+
+#### fixtures/emails-found/mock-mcp-response.json
+
+```json
+{
+  "tool": "gmail_search_emails",
+  "response": {
+    "content": [
+      {
+        "id": "msg1",
+        "threadId": "thread1",
+        "from": "alice@company.com",
+        "subject": "Auth system design review",
+        "date": "2026-01-10T10:30:00Z",
+        "snippet": "Here's the design doc for the auth system..."
+      },
+      {
+        "id": "msg2",
+        "threadId": "thread1",
+        "from": "bob@company.com",
+        "subject": "Re: Auth system design review",
+        "date": "2026-01-11T14:20:00Z",
+        "snippet": "Looks good! I have a few questions about..."
+      }
+    ]
+  }
+}
+```
+
 ---
 
-## Comparison: Gmail vs Notion MCP Patterns
+## Implementation Phases
 
-| Aspect | Notion MCP (Reference) | Gmail MCP (Proposed) |
-|--------|------------------------|----------------------|
-| **Official Server** | [makenotion/notion-mcp-server](https://github.com/makenotion/notion-mcp-server) | `entourage-gmail-mcp` |
-| **Auth Method** | Internal integration token | OAuth 2.0 |
-| **Scopes** | Full workspace access | `gmail.readonly` only |
-| **Tools Count** | 21 tools | 3 tools (minimal) |
-| **Transport** | STDIO + HTTP | STDIO only |
-| **Config** | `NOTION_TOKEN` env var | `~/.entourage/gmail-token.json` |
+### Phase 1: Eval Foundation (Day 1)
 
-### Lessons from Notion MCP
+**Goal:** Complete evaluation infrastructure before any skill code
 
-1. **Separate server repo** - MCP server is its own npm package
-2. **Markdown-friendly output** - Content returned in editable format
-3. **Search-first** - `search` tool is primary entry point
-4. **Environment-based auth** - Token via env var, not config file
+Tasks:
+- [ ] Create `skills/gmail-check/` directory structure
+- [ ] Write `evaluation.json` with all test cases
+- [ ] Create fixture directories with mock data
+- [ ] Run validation: `./tests/validate.sh`
+- [ ] Verify all test cases have unambiguous criteria
+
+**Success Criteria:**
+- `validate.sh` passes
+- Each test case has clear pass/fail criteria
+- Domain expert review confirms criteria are correct
+
+### Phase 2: Reference Solutions (Day 2)
+
+**Goal:** Prove all test cases are solvable
+
+Tasks:
+- [ ] Write `fixtures/*/expected-output.md` for each test case
+- [ ] Manually verify each expected output meets criteria
+- [ ] Document any edge cases discovered
+
+**Success Criteria:**
+- Every test case has a reference solution
+- Reference solutions pass their own assertions
+- No ambiguous or impossible test cases
+
+### Phase 3: SKILL.md Implementation (Day 3-4)
+
+**Goal:** Write skill definition that passes evals
+
+Tasks:
+- [ ] Write SKILL.md with complete workflow
+- [ ] Iterate until regression evals pass@1 = 100%
+- [ ] Iterate until capability evals pass@3 > 80%
+- [ ] Review transcripts for failed trials
+
+**Success Criteria:**
+- All regression evals pass consistently
+- Capability evals meet targets
+- No systematic failure patterns
+
+### Phase 4: Integration (Day 5)
+
+**Goal:** Integrate with `/project-status`
+
+Tasks:
+- [ ] Update `/project-status` SKILL.md to invoke `/gmail-check`
+- [ ] Add Gmail evidence synthesis to status hierarchy
+- [ ] Run end-to-end tests
+
+**Success Criteria:**
+- `/project-status` includes Gmail evidence when enabled
+- Evidence correctly influences status recommendations
 
 ---
 
-## Open Questions
+## Testing Without MCP
 
-1. **Should Gmail MCP be in my-entourage org?**
-   - Recommendation: Yes, as `my-entourage/entourage-gmail-mcp`
+Since MCP tools aren't available in test subprocesses, evaluations use:
 
-2. **Support third-party Gmail MCP servers?**
-   - Recommendation: Yes, skill should work with any MCP server
-   - Configuration allows specifying custom server
+1. **Fixture-based mocking** — Mock MCP responses in fixture files
+2. **Config-only tests** — Test configuration parsing without MCP calls
+3. **Manual verification** — Interactive testing in live Claude session
+4. **Pending status** — Mark MCP-dependent tests as pending for local runs
 
-3. **Per-repo Gmail filters?**
-   - Recommendation: Yes, via `repos[].gmailFilters` array
-   - Allows project-specific email searches
-
-4. **Batch vs individual email fetching?**
-   - Recommendation: Start with list + selective read
-   - Avoid fetching full content of all emails
+```json
+{
+  "id": "emails-found",
+  "status": "pending",
+  "pendingReason": "Requires Gmail MCP; run manually or with mock server"
+}
+```
 
 ---
 
 ## Success Criteria
 
+- [ ] All regression evals pass@1 = 100%
+- [ ] All capability evals pass@3 > 80%
+- [ ] All adversarial evals pass@1 > 90%
 - [ ] `/gmail-check` returns structured email evidence
-- [ ] Works with any Gmail MCP server (not locked to ours)
+- [ ] Works with any Gmail MCP (not locked to specific server)
 - [ ] `/project-status` integrates Gmail evidence
 - [ ] Configuration schema documented in examples
-- [ ] Privacy: only `gmail.readonly` scope required
-- [ ] Evaluation tests pass with 80%+ rate
+- [ ] No hallucinated emails in any trial
 
 ---
 
 ## References
 
-- [Gmail Integration Research](./2026-01-14-gmail-integration-research.md)
-- [Official Notion MCP Server](https://github.com/makenotion/notion-mcp-server)
-- [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)
-- [Gmail API Scopes](https://developers.google.com/workspace/gmail/api/auth/scopes)
+- [Gmail MCP Implementation Plan](./2026-01-14-gmail-mcp-implementation-plan.md)
+- [Gmail Integration Research](../research/2026-01-14-gmail-integration-research.md)
+- [Demystifying Evals for AI Agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) — Anthropic
+- [Evaluating AI Agents Research](../research/2026-01-14-evaluating-ai-agents-testing-approaches-media-content.md)
+- [entourage-plugin Evaluation Infrastructure](../../thoughts/plans/2026-01-12-eval-infrastructure-plan.md)
