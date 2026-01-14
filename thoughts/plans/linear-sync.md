@@ -1,8 +1,9 @@
-# Linear Sync Skill - Deferred Plan
+# Linear Sync Skill
 
-**Status:** Deferred
-**Depends on:** `/linear-check` skill (must be completed first)
+**Status:** In Progress
+**Depends on:** `/linear-check` skill (completed)
 **Created:** 2026-01-14
+**Implementation Started:** 2026-01-14
 
 ## Overview
 
