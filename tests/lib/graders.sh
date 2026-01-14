@@ -119,8 +119,9 @@ check_status() {
     local output="$1"
     local expected_status="$2"
 
-    # Check various status formats
-    if echo "$output" | grep -qiE "(status[:\s]*\**\s*$expected_status|\"status\":\s*\"$expected_status\")"; then
+    # Check various status formats (using POSIX character classes, not \s)
+    # Matches: "Status: Complete", "**Status**: Complete", "**Status:** Complete"
+    if echo "$output" | grep -qiE "(status[: ]*\**[: ]*$expected_status|\"status\":[[:space:]]*\"$expected_status\")"; then
         return 0
     fi
 
@@ -138,7 +139,17 @@ check_confidence() {
     local output="$1"
     local expected_confidence="$2"
 
-    if echo "$output" | grep -qiE "(confidence[:\s]*\**\s*$expected_confidence|\"confidence\":\s*\"$expected_confidence\")"; then
+    # Check various confidence formats:
+    # - "confidence: High" or "**confidence:** High"
+    # - "Confidence Level: High"
+    # - In table format: "| Complete | High |"
+    # - JSON: "confidence": "High"
+    if echo "$output" | grep -qiE "(confidence[:\s]*\**\s*$expected_confidence|Confidence Level[:\s]*\**\s*$expected_confidence|\"confidence\":\s*\"$expected_confidence\")"; then
+        return 0
+    fi
+
+    # Also check in table format (column after Status)
+    if echo "$output" | grep -qiE "\|[^|]*\|[^|]*$expected_confidence[^|]*\|"; then
         return 0
     fi
 

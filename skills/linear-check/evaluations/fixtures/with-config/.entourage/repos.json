@@ -1,0 +1,13 @@
+{
+  "linear": {
+    "teamId": "TEAM",
+    "workspace": "my-workspace"
+  },
+  "repos": [
+    {
+      "name": "my-project",
+      "path": ".",
+      "github": "my-org/my-project"
+    }
+  ]
+}
