@@ -202,6 +202,71 @@
       "expectedOutput": {
         "contains": ["Linear Scan"]
       }
+    },
+    {
+      "id": "local-issue-done",
+      "name": "Local: Issue found with Done status",
+      "input": "/linear-check slash command",
+      "status": "active",
+      "setup": {
+        "description": "Tests against real ENT workspace - ENT-48 is Done"
+      },
+      "expectedBehavior": "Returns issue with Done status",
+      "expectedOutput": {
+        "contains": ["ENT-48", "Done"]
+      }
+    },
+    {
+      "id": "local-issue-backlog",
+      "name": "Local: Issue found with Backlog status",
+      "input": "/linear-check context skill",
+      "status": "active",
+      "setup": {
+        "description": "Tests against real ENT workspace - ENT-49 is Backlog"
+      },
+      "expectedBehavior": "Returns issue with Backlog status",
+      "expectedOutput": {
+        "contains": ["ENT-49", "Backlog"]
+      }
+    },
+    {
+      "id": "local-issue-todo",
+      "name": "Local: Issue found with Todo status",
+      "input": "/linear-check tech stack",
+      "status": "active",
+      "setup": {
+        "description": "Tests against real ENT workspace - ENT-50 is Todo"
+      },
+      "expectedBehavior": "Returns issue with Todo status",
+      "expectedOutput": {
+        "contains": ["ENT-50", "Todo"]
+      }
+    },
+    {
+      "id": "local-no-issue",
+      "name": "Local: No matching issue found",
+      "input": "/linear-check nonexistent-xyz-999",
+      "status": "active",
+      "setup": {
+        "description": "Tests against real ENT workspace - no matching issues"
+      },
+      "expectedBehavior": "Returns message indicating no issues found",
+      "expectedOutput": {
+        "contains": ["No Linear issue"]
+      }
+    },
+    {
+      "id": "local-multiple-issues",
+      "name": "Local: Multiple issues found",
+      "input": "/linear-check logger",
+      "status": "active",
+      "setup": {
+        "description": "Tests against real ENT workspace - multiple issues match 'logger'"
+      },
+      "expectedBehavior": "Returns table with multiple issues",
+      "expectedOutput": {
+        "contains": ["ENT-"]
+      }
     }
   ]
 }

@@ -2,7 +2,7 @@
 
 **Date:** 2026-01-14
 **Branch:** `linear-check-claude-code-skill`
-**Status:** Ready for Review - All Implementation & Testing Complete
+**Status:** Ready for PR Review - Skill Implementation Complete, Testing Pending Merge
 
 ## Objective
 
@@ -183,6 +183,81 @@ If Linear MCP is configured, test the MCP tools directly:
 - [ ] Test API token fallback (requires disabling MCP)
 - [ ] Create PR for review
 
+## Evaluation Test Limitations
+
+### MCP Cannot Be Used in Automated Tests
+
+The test runner (`tests/run.sh`) spawns isolated Claude Code subprocess for each test case. These subprocesses **cannot access MCP servers** because:
+
+1. **Session isolation** - Each `claude` subprocess starts fresh without inheriting MCP connections
+2. **Interactive authorization required** - MCP servers require user approval on first use
+3. **No credential passthrough** - The test harness runs non-interactively
+
+```
+Your Claude session (MCP access approved)
+    │
+    └── ./tests/run.sh
+            │
+            └── claude --plugin-dir ... "input"
+                      │
+                      └── NEW session (no MCP access)
+```
+
+### Test Output Example
+
+When a test runs with MCP-dependent config but no MCP access:
+```
+I found a Linear configuration but it doesn't include an API token.
+The Linear MCP requires permission to access.
+```
+
+The skill correctly detects config but can't query Linear without either MCP or API token.
+
+### Solutions for Automated Testing
+
+| Approach | Description | Trade-offs |
+|----------|-------------|------------|
+| **API token in gitignored fixture** | Add `token` to `local-*` fixtures | Full automation; requires token management |
+| **Mock MCP responses** | Create mock server returning canned responses | Deterministic; complex to maintain |
+| **Manual testing only** | Test interactively in live session | Uses real MCP; can't automate |
+| **Generic tests stay pending** | Keep MCP-dependent tests as `"status": "pending"` | Clean published state; no automated verification |
+
+### Current Test Structure
+
+```
+evaluation.json test cases:
+├── Generic (pending) - Require fixture data, kept for third parties
+│   ├── no-config
+│   ├── issue-found-in-progress
+│   ├── issue-found-done
+│   └── ... (12 total)
+│
+└── Local (active, gitignored) - For developer testing
+    ├── local-issue-done      → ENT-48 (Done)
+    ├── local-issue-backlog   → ENT-49 (Backlog)
+    ├── local-issue-todo      → ENT-50 (Todo)
+    ├── local-no-issue        → (no match)
+    └── local-multiple-issues → (multiple ENT-* matches)
+```
+
+### Enabling Local Tests with API Token
+
+To make `local-*` tests pass:
+
+1. Generate token at https://linear.app/myentourage/settings/api
+2. Add to gitignored fixture:
+   ```json
+   // skills/linear-check/evaluations/fixtures/local-ent/.entourage/repos.json
+   {
+     "linear": {
+       "token": "lin_api_YOUR_TOKEN",
+       "teamId": "ENT",
+       "workspace": "myentourage"
+     }
+   }
+   ```
+3. Run: `./tests/run.sh linear-check`
+
 ## Test Results (2026-01-14)
 
 Linear MCP tools tested directly to verify integration:
@@ -203,6 +278,48 @@ Linear MCP tools tested directly to verify integration:
 - `Triage` (triage) ✓
 
 **Note:** The `/linear-check` skill file exists but requires a Claude Code restart to be loaded. MCP tools work correctly and the skill will use these same tools once loaded.
+
+## Next Steps for Testing (Post-Merge)
+
+### Why the Skill Isn't Loaded Yet
+
+The `linear-check` skill exists in `skills/linear-check/SKILL.md` but **doesn't appear in loaded skills** because:
+1. The plugin is loaded from the **current working directory** or via `--plugin-dir`
+2. Skills are discovered at Claude Code startup
+3. This branch hasn't been merged to main yet
+
+### After Merging This PR
+
+1. **Merge PR to main**
+2. **Restart Claude Code** in a directory with this plugin loaded
+3. **Verify skill appears** in `/context` output under Skills
+4. **Test skill invocation:**
+   ```
+   /linear-check slash command    → Should find ENT-48 (Done)
+   /linear-check tech stack       → Should find ENT-50 (Todo)
+   /linear-check context skill    → Should find ENT-49 (Backlog)
+   /linear-check nonexistent-xyz  → Should return "No Linear issue found"
+   ```
+
+### For Automated Testing (Optional)
+
+To run automated tests with real Linear data:
+
+1. Generate Linear API token at https://linear.app/myentourage/settings/api
+2. Add token to gitignored fixture:
+   ```bash
+   # File: skills/linear-check/evaluations/fixtures/local-ent/.entourage/repos.json
+   {
+     "linear": {
+       "token": "lin_api_YOUR_TOKEN",
+       "teamId": "ENT",
+       "workspace": "myentourage"
+     }
+   }
+   ```
+3. Run: `./tests/run.sh linear-check`
+
+**Note:** Local fixtures (`local-*`) are gitignored and won't be committed.
 
 ## References
 
