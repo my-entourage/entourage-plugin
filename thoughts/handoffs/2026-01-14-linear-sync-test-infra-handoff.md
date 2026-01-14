@@ -99,7 +99,57 @@ Failed:         0
 Skipped:        5 (write tests pending local fixture)
 ```
 
+## Critical Limitation: MCP Access in Test Runner
+
+**The automated write tests cannot actually execute MCP operations.** This is a fundamental architectural limitation, not a configuration issue.
+
+### Why linear-check Tests Work
+
+The `/linear-check` skill has **dual authentication**:
+1. **Prefer MCP** - Use Linear MCP if available
+2. **Fallback to API token** - Use token from `.entourage/repos.json` if MCP unavailable
+
+When the test runner spawns Claude subprocesses, those subprocesses can't access MCP, but they CAN use the API token fallback. This makes linear-check tests executable.
+
+### Why linear-sync Tests Cannot Work
+
+The `/linear-sync` skill requires **MCP write tools** (`create_issue`, `update_issue`, `create_comment`). There is no API token fallback for write operations.
+
+```
+Your Claude session (MCP access approved)
+    │
+    └── ./tests/run.sh
+            │
+            └── claude "test input"   ← NEW session, no MCP access
+                                        No API fallback for writes
+```
+
+**Root causes:**
+1. **Session isolation** - Each subprocess starts fresh without inheriting MCP connections
+2. **Interactive authorization** - MCP servers require user approval on first connection
+3. **No credential inheritance** - OAuth tokens are session-scoped, not passed to child processes
+
+### What the Write Tests Actually Provide
+
+These tests serve as **documentation and templates**, not executable automated tests:
+- Define expected inputs and outputs for each operation
+- Provide structure for manual testing verification
+- Document the grader patterns that would validate success
+
+### Real Verification Method
+
+Write operations must be verified **manually in an interactive session** with MCP access:
+1. Use `tests/integration/linear-mcp-writes.md` checklist
+2. Run each operation in a live Claude session
+3. Verify results in Linear UI
+
+This was validated on 2026-01-14 - all MCP write operations (create, update, comment, assign, due date, cancel) work correctly when invoked in an interactive session.
+
+---
+
 ## How to Run Write Tests
+
+> **Note:** These tests will not actually execute MCP operations due to the limitation above. They serve as documentation for the expected behavior.
 
 ### Step 1: Create Local Fixture
 
