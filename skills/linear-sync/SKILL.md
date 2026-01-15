@@ -246,6 +246,85 @@ Read Linear settings from `.entourage/repos.json`:
 
 ---
 
+## API Token Fallback (When MCP Unavailable)
+
+When Linear MCP is not available (e.g., in automated tests), fall back to direct GraphQL API calls using token from `.entourage/repos.json`.
+
+### MCP Detection Protocol
+
+1. **Attempt MCP tool call** (e.g., `mcp__linear__list_issue_statuses`)
+2. **Check response:**
+   - Success → Continue using MCP
+   - Failure/not available → Use API token fallback
+
+### GraphQL Mutations
+
+**Update Issue Status:**
+```graphql
+mutation IssueUpdate($id: String!, $stateId: String!) {
+  issueUpdate(id: $id, input: { stateId: $stateId }) {
+    success
+    issue {
+      id
+      identifier
+      state { id name type }
+    }
+  }
+}
+```
+
+**Curl example:**
+```bash
+curl -X POST https://api.linear.app/graphql \
+  -H "Authorization: $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "mutation($id: String!, $stateId: String!) { issueUpdate(id: $id, input: { stateId: $stateId }) { success } }",
+    "variables": {"id": "issue-uuid", "stateId": "state-uuid"}
+  }'
+```
+
+**Create Comment:**
+```graphql
+mutation CommentCreate($issueId: String!, $body: String!) {
+  commentCreate(input: { issueId: $issueId, body: $body }) {
+    success
+    comment { id }
+  }
+}
+```
+
+**Curl example:**
+```bash
+curl -X POST https://api.linear.app/graphql \
+  -H "Authorization: $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "mutation($issueId: String!, $body: String!) { commentCreate(input: { issueId: $issueId, body: $body }) { success } }",
+    "variables": {"issueId": "issue-uuid", "body": "Status updated based on code evidence..."}
+  }'
+```
+
+**Get Team States (to resolve state name → ID):**
+```graphql
+query TeamStates($teamId: String!) {
+  team(id: $teamId) {
+    states {
+      nodes { id name type }
+    }
+  }
+}
+```
+
+### Write Test Safety
+
+When running automated tests that create/modify Linear issues:
+1. Prefix all test issue titles with `[TEST]`
+2. Set test issues to `Canceled` status after verification
+3. Linear auto-archives canceled issues per workspace settings
+
+---
+
 ## Error Handling
 
 ### Linear MCP Not Available
