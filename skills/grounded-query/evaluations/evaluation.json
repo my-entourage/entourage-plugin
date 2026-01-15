@@ -12,7 +12,10 @@
       "expectedBehavior": "Returns SUPPORTED status with file reference",
       "expectedOutput": {
         "evidenceStatus": "SUPPORTED",
-        "contains": ["Supabase", "database"],
+        "contains": [
+          "Supabase",
+          "database"
+        ],
         "hasSource": true
       }
     },
@@ -26,7 +29,10 @@
       "expectedBehavior": "Returns PARTIAL status indicating indirect evidence",
       "expectedOutput": {
         "evidenceStatus": "PARTIAL",
-        "contains": ["Supabase", "related"]
+        "contains": [
+          "Supabase",
+          "related"
+        ]
       }
     },
     {
@@ -39,7 +45,10 @@
       "expectedBehavior": "Returns NOT FOUND status",
       "expectedOutput": {
         "evidenceStatus": "NOT FOUND",
-        "contains": ["could not be verified", "no evidence"]
+        "contains": [
+          "could not be verified",
+          "no evidence"
+        ]
       }
     },
     {
@@ -52,7 +61,11 @@
       "expectedBehavior": "Each claim verified independently in evidence table",
       "expectedOutput": {
         "tableRows": ">=3",
-        "columns": ["Claim", "Status", "Source"]
+        "columns": [
+          "Claim",
+          "Status",
+          "Source"
+        ]
       }
     },
     {
@@ -64,7 +77,10 @@
       },
       "expectedBehavior": "Evidence table shows mix of SUPPORTED, PARTIAL, and NOT FOUND",
       "expectedOutput": {
-        "hasStatus": ["SUPPORTED", "NOT FOUND"],
+        "hasStatus": [
+          "SUPPORTED",
+          "NOT FOUND"
+        ],
         "format": "table"
       }
     },
@@ -78,7 +94,11 @@
       "expectedBehavior": "Verifies date claim against source file timestamp and content",
       "expectedOutput": {
         "evidenceStatus": "SUPPORTED",
-        "contains": ["January", "Dec", "2025-12-22"]
+        "contains": [
+          "January",
+          "Dec",
+          "2025-12-22"
+        ]
       }
     },
     {
@@ -92,7 +112,10 @@
       "expectedOutput": {
         "evidenceStatus": "SUPPORTED",
         "hasSource": true,
-        "contains": ["mentioned", "suggested"]
+        "contains": [
+          "mentioned",
+          "suggested"
+        ]
       }
     },
     {
@@ -105,7 +128,10 @@
       "expectedBehavior": "Confirms decision with SUPPORTED status and source reference",
       "expectedOutput": {
         "evidenceStatus": "SUPPORTED",
-        "contains": ["decided", "Next.js"],
+        "contains": [
+          "decided",
+          "Next.js"
+        ],
         "hasSource": true
       }
     },
@@ -118,8 +144,17 @@
       },
       "expectedBehavior": "Does NOT claim Complete status based only on discussion",
       "expectedOutput": {
-        "notContains": ["Complete", "Done", "Finished", "Implemented"],
-        "contains": ["discussed", "planned", "will implement"]
+        "notContains": [
+          "Complete",
+          "Done",
+          "Finished",
+          "Implemented"
+        ],
+        "contains": [
+          "discussed",
+          "planned",
+          "will implement"
+        ]
       }
     },
     {
@@ -131,7 +166,11 @@
       },
       "expectedBehavior": "Warns about inability to verify claims",
       "expectedOutput": {
-        "contains": ["no data files", "cannot verify", "no transcripts"]
+        "contains": [
+          "no data files",
+          "cannot verify",
+          "no transcripts"
+        ]
       }
     },
     {
@@ -144,7 +183,11 @@
       "expectedBehavior": "Response ends with properly formatted evidence table",
       "expectedOutput": {
         "endsWithTable": true,
-        "tableHeaders": ["Claim", "Status", "Source"],
+        "tableHeaders": [
+          "Claim",
+          "Status",
+          "Source"
+        ],
         "format": "markdown"
       }
     }
