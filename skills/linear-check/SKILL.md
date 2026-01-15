@@ -54,6 +54,23 @@ curl -X POST https://api.linear.app/graphql \
   -d '{"query": "..."}'
 ```
 
+### MCP Detection Protocol
+
+When executing queries, follow this detection flow:
+
+1. **Attempt MCP tool call** (e.g., `mcp__linear__list_issues`)
+2. **Check response:**
+   - If successful response with data → Continue using MCP
+   - If error "MCP not available" or tool not found → Fall back to API
+   - If auth error from MCP → Fall back to API token from config
+
+**Example detection:**
+```
+Attempting: mcp__linear__list_teams
+├── Success → Use MCP for all operations
+└── Failure → Check .entourage/repos.json for API token
+```
+
 ---
 
 ## Configuration Discovery
