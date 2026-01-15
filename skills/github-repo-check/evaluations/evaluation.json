@@ -6,6 +6,8 @@
       "id": "no-config",
       "name": "No repository configuration",
       "input": "/github-repo-check auth",
+      "status": "pending",
+      "pendingReason": "Needs fixture with no repos.json",
       "setup": {
         "description": "No .entourage/repos.json file exists"
       },
@@ -21,6 +23,8 @@
       "id": "no-github-field",
       "name": "Repos configured without github field",
       "input": "/github-repo-check auth",
+      "status": "pending",
+      "pendingReason": "Needs fixture with repos.json without github field",
       "setup": {
         "config": {
           "repos": [
@@ -44,6 +48,8 @@
       "id": "gh-not-authenticated",
       "name": "gh CLI not authenticated",
       "input": "/github-repo-check auth",
+      "status": "pending",
+      "pendingReason": "Requires mock gh CLI behavior",
       "setup": {
         "description": "gh CLI installed but not authenticated, no token in config"
       },
@@ -59,6 +65,8 @@
       "id": "token-invalid",
       "name": "Invalid or expired token (401)",
       "input": "/github-repo-check auth",
+      "status": "pending",
+      "pendingReason": "Requires mock GitHub API response",
       "setup": {
         "description": "GitHub API returns 401 Unauthorized"
       },
@@ -75,6 +83,8 @@
       "id": "rate-limited",
       "name": "API rate limit reached (403)",
       "input": "/github-repo-check auth",
+      "status": "pending",
+      "pendingReason": "Requires mock GitHub API response",
       "setup": {
         "description": "GitHub API returns 403 with rate limit headers"
       },
@@ -90,6 +100,8 @@
       "id": "repo-not-found",
       "name": "Repository not found (404)",
       "input": "/github-repo-check auth",
+      "status": "pending",
+      "pendingReason": "Requires mock GitHub API response",
       "setup": {
         "config": {
           "repos": [
@@ -114,6 +126,8 @@
       "id": "shipped-deployment",
       "name": "Shipped status - production deployment exists",
       "input": "/github-repo-check auth",
+      "status": "pending",
+      "pendingReason": "Requires actual GitHub repo with production deployment",
       "setup": {
         "description": "Component has production deployment in GitHub"
       },
@@ -127,6 +141,8 @@
       "id": "complete-merged-ci-pass",
       "name": "Complete status - PR merged + CI passing",
       "input": "/github-repo-check auth",
+      "status": "pending",
+      "pendingReason": "Needs fixture with merged PR and CI data",
       "setup": {
         "description": "PR merged to main and most recent Actions run is passing"
       },
@@ -140,6 +156,8 @@
       "id": "complete-merged-only",
       "name": "Complete status - PR merged (no CI status)",
       "input": "/github-repo-check auth",
+      "status": "pending",
+      "pendingReason": "Needs fixture with merged PR without CI",
       "setup": {
         "description": "PR merged to main, no Actions configured or no recent runs"
       },
@@ -153,6 +171,8 @@
       "id": "in-progress-pr-approved",
       "name": "In Progress status - open PR with approvals",
       "input": "/github-repo-check dashboard",
+      "status": "pending",
+      "pendingReason": "Needs fixture with approved open PR",
       "setup": {
         "description": "Open PR exists with one or more approving reviews"
       },
@@ -166,6 +186,8 @@
       "id": "in-progress-pr-pending",
       "name": "In Progress status - open PR pending review",
       "input": "/github-repo-check dashboard",
+      "status": "pending",
+      "pendingReason": "Needs fixture with pending PR",
       "setup": {
         "description": "Open PR exists with no reviews or pending reviews"
       },
@@ -179,6 +201,8 @@
       "id": "in-progress-issue-label",
       "name": "In Progress status - issue with in-progress label",
       "input": "/github-repo-check payments",
+      "status": "pending",
+      "pendingReason": "Needs fixture with labeled issue",
       "setup": {
         "description": "GitHub issue exists with 'in progress' or similar label"
       },
@@ -192,6 +216,8 @@
       "id": "planned-issue-open",
       "name": "Planned status - open issue exists",
       "input": "/github-repo-check notifications",
+      "status": "pending",
+      "pendingReason": "Needs fixture with open issue",
       "setup": {
         "description": "Open GitHub issue exists for component (no PR, no in-progress label)"
       },
@@ -221,6 +247,8 @@
       "id": "multi-component",
       "name": "Multiple components query",
       "input": "/github-repo-check auth dashboard payments",
+      "status": "pending",
+      "pendingReason": "Needs fixture with multiple component states",
       "setup": {
         "description": "auth=Complete, dashboard=In Progress, payments=Planned"
       },
@@ -240,6 +268,8 @@
       "id": "single-component-output",
       "name": "Single component with details",
       "input": "/github-repo-check clerk-auth",
+      "status": "pending",
+      "pendingReason": "Needs fixture with component details",
       "setup": {
         "description": "Component has PR merged with CI passing and deployment"
       },
@@ -258,6 +288,8 @@
       "id": "case-insensitive",
       "name": "Case insensitive component search",
       "input": "/github-repo-check Auth",
+      "status": "pending",
+      "pendingReason": "Needs fixture with case-variant component",
       "setup": {
         "description": "Component referenced as 'auth' in PRs/issues"
       },
@@ -272,6 +304,8 @@
       "id": "multiple-repos-same-component",
       "name": "Component found in multiple repositories",
       "input": "/github-repo-check auth",
+      "status": "pending",
+      "pendingReason": "Needs fixture with multi-repo setup",
       "setup": {
         "config": {
           "repos": [

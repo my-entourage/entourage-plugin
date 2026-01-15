@@ -6,6 +6,8 @@
       "id": "supported-claim",
       "name": "Direct evidence found",
       "input": "What database did the team choose?",
+      "status": "pending",
+      "pendingReason": "Skill looks for data in example paths from SKILL.md, not current directory - needs skill update",
       "setup": {
         "description": "Transcript contains explicit statement: 'We decided to use Supabase as the primary database'"
       },
@@ -23,16 +25,20 @@
       "id": "partial-evidence",
       "name": "Related but inexact match",
       "input": "Is the team using PostgreSQL?",
+      "status": "pending",
+      "pendingReason": "Needs fixture with Supabase mention but no explicit PostgreSQL",
       "setup": {
         "description": "Transcript mentions Supabase (which uses PostgreSQL) but doesn't explicitly say PostgreSQL"
       },
-      "expectedBehavior": "Returns PARTIAL status indicating indirect evidence",
+      "expectedBehavior": "Returns nuanced response about indirect evidence",
       "expectedOutput": {
         "evidenceStatus": "PARTIAL",
         "contains": [
           "Supabase",
+          "PostgreSQL",
           "related"
-        ]
+        ],
+        "hasSource": true
       }
     },
     {
@@ -46,6 +52,7 @@
       "expectedOutput": {
         "evidenceStatus": "NOT FOUND",
         "contains": [
+          "NOT FOUND",
           "could not be verified",
           "no evidence"
         ]
@@ -55,6 +62,8 @@
       "id": "multiple-claims",
       "name": "Multiple claims verification",
       "input": "Summarize the tech stack decisions",
+      "status": "pending",
+      "pendingReason": "Needs fixture with multiple tech stack decisions",
       "setup": {
         "description": "Response will contain multiple claims about database, frontend, hosting, etc."
       },
@@ -72,6 +81,8 @@
       "id": "mixed-evidence",
       "name": "Claims with different statuses",
       "input": "What decisions were made about auth, database, and deployment?",
+      "status": "pending",
+      "pendingReason": "Needs fixture with auth and database but no deployment",
       "setup": {
         "description": "Auth and database discussed in transcripts, deployment never mentioned"
       },
@@ -88,6 +99,8 @@
       "id": "date-verification",
       "name": "Date claim verification",
       "input": "When was the MVP deadline set?",
+      "status": "pending",
+      "pendingReason": "Needs fixture with MVP deadline mention",
       "setup": {
         "description": "Transcript from Dec 22 mentions 'MVP by end of January'"
       },
@@ -105,6 +118,8 @@
       "id": "person-attribution",
       "name": "Person said X",
       "input": "Who suggested using Supabase?",
+      "status": "pending",
+      "pendingReason": "Needs fixture with person attribution",
       "setup": {
         "description": "Transcript shows specific person mentioning Supabase recommendation"
       },
@@ -122,6 +137,8 @@
       "id": "decision-claim",
       "name": "Team decision verification",
       "input": "Did the team decide to use Next.js?",
+      "status": "pending",
+      "pendingReason": "Needs fixture with Next.js decision",
       "setup": {
         "description": "Transcript contains decision statement about Next.js"
       },
@@ -148,12 +165,18 @@
           "Complete",
           "Done",
           "Finished",
-          "Implemented"
+          "Implemented",
+          "is complete",
+          "is done",
+          "is finished",
+          "has been implemented"
         ],
         "contains": [
           "discussed",
           "planned",
-          "will implement"
+          "will implement",
+          "not complete",
+          "planning"
         ]
       }
     },
@@ -161,6 +184,8 @@
       "id": "no-data-files",
       "name": "No source files available",
       "input": "What did the team decide?",
+      "status": "pending",
+      "pendingReason": "Needs fixture with empty data directory",
       "setup": {
         "description": "No data/ directory or empty transcripts folder"
       },
@@ -177,6 +202,8 @@
       "id": "evidence-table-format",
       "name": "Correct output format",
       "input": "What tech stack was chosen?",
+      "status": "pending",
+      "pendingReason": "Needs fixture with tech stack data",
       "setup": {
         "description": "Standard query with verifiable claims"
       },

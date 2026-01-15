@@ -138,10 +138,10 @@ Apply this decision tree to determine component status:
 
 ```
 1. Code + tests found + on main branch?
-   YES -> Status: Complete (High confidence)
+   YES -> Status: Done (High confidence)
 
 2. Code + tests found (any branch)?
-   YES -> Status: Complete (Medium confidence)
+   YES -> Status: Done (Medium confidence)
 
 3. Code found but no tests?
    YES -> Status: In Progress (Medium confidence)
@@ -184,7 +184,7 @@ If `~` expansion fails:
 
 | Repository | Evidence | Status | Confidence |
 |------------|----------|--------|------------|
-| [repo-name] | [Brief evidence summary] | Complete/In Progress/Unknown | High/Med/Low |
+| [repo-name] | [Brief evidence summary] | Done/In Progress/Unknown | High/Med/Low |
 
 ### Scan Details
 
@@ -213,7 +213,7 @@ When checking multiple components, output a summary table followed by details fo
 
 | Component | Status | Source | Confidence |
 |-----------|--------|--------|------------|
-| auth | Complete | entourage-web | High |
+| auth | Done | entourage-web | High |
 | dashboard | In Progress | entourage-web | Medium |
 | payments | Unknown | - | - |
 
@@ -233,7 +233,7 @@ When checking multiple components, output a summary table followed by details fo
 
 | Repository | Evidence | Status | Confidence |
 |------------|----------|--------|------------|
-| entourage-web | Code + tests on main | Complete | High |
+| entourage-web | Code + tests on main | Done | High |
 
 ### Scan Details
 

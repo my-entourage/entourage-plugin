@@ -19,11 +19,14 @@ Apply when user asks:
 
 | Status | Definition | Evidence Required |
 |--------|------------|-------------------|
-| `Discussed` | Mentioned in meetings/messages | Transcript/message reference |
-| `Planned` | Explicit decisions documented | Decision in transcript + rationale, or GitHub Issue |
+| `Triage` | Mentioned but needs review | Transcript/message reference |
+| `Backlog` | Accepted, prioritized for future | Decision documented, or Linear/GitHub Issue |
+| `Todo` | Scheduled, ready to start | Assigned in Linear or explicitly scheduled |
 | `In Progress` | Implementation started | Code in repo or open PR |
-| `Complete` | Working implementation | Code + tests, or merged PR with CI passing |
+| `In Review` | PR open, awaiting review | Open PR with review requested |
+| `Done` | Working implementation | Code + tests, or merged PR with CI passing |
 | `Shipped` | Deployed to production | Deployment evidence from GitHub |
+| `Canceled` | Explicitly closed | Issue/PR closed as won't fix, duplicate, etc. |
 | `Unknown` | Insufficient evidence | N/A |
 
 ---
@@ -64,22 +67,26 @@ Include skills in the component status table with type indicator:
    - Invoke `/local-repo-check <components>` for local git evidence
 5. If repos configured with `github` field:
    - Invoke `/github-repo-check <components>` for GitHub evidence
-6. Combine all evidence sources using the unified hierarchy
-7. Output status table with sources
+6. If `linear` section configured:
+   - Invoke `/linear-check <components>` for Linear issue evidence
+7. Combine all evidence sources using the unified hierarchy
+8. Output status table with sources
 
 ---
 
-## Repository Verification
+## Evidence Sources
 
-This skill uses two sub-skills to verify implementation status:
+This skill uses three sub-skills to verify implementation status:
 - `/local-repo-check` - Scans local git repositories
 - `/github-repo-check` - Queries GitHub API for PRs, issues, Actions, deployments
+- `/linear-check` - Queries Linear for issue tracking status
 
 ### Configuration Check
 
-Read `.entourage/repos.json` and check each repo entry for:
-- `path` field - Enables local scanning via `/local-repo-check`
-- `github` field - Enables GitHub scanning via `/github-repo-check`
+Read `.entourage/repos.json` and check for:
+- `path` field in repos - Enables local scanning via `/local-repo-check`
+- `github` field in repos - Enables GitHub scanning via `/github-repo-check`
+- `linear` section - Enables Linear scanning via `/linear-check`
 
 ### With Local Repository (`path` configured)
 
@@ -91,35 +98,47 @@ Read `.entourage/repos.json` and check each repo entry for:
 1. Invoke `/github-repo-check <component-names>`
 2. Get evidence: PRs, issues, Actions status, deployments
 
-### Without Any Repository Configuration
+### With Linear (`linear` section configured)
 
-- Skip both `/local-repo-check` and `/github-repo-check`
-- Limit status levels to "Discussed" or "Planned" (transcript evidence only)
-- Add note about configuring repos
+1. Invoke `/linear-check <component-names>`
+2. Get evidence: issue status, assignees, workflow state
+
+### Without Any Configuration
+
+- Skip all sub-skills
+- Limit status levels to "Triage" (transcript evidence only)
+- Add note about configuring sources
 
 ---
 
 ## Unified Evidence Hierarchy
 
-When combining evidence from transcripts, local repos, and GitHub, use this priority order:
+When combining evidence from transcripts, local repos, GitHub, and Linear, use this priority order:
 
 | Priority | Evidence Type | Source | Max Status |
 |----------|--------------|--------|------------|
 | 1 | Deployment to production | GitHub | Shipped |
-| 2 | PR merged + CI passing | GitHub | Complete |
-| 3 | Code + tests on main | Local | Complete |
-| 4 | PR merged (no CI info) | GitHub | Complete |
-| 5 | Code + tests (any branch) | Local | Complete |
-| 6 | Open PR with approvals | GitHub | In Progress |
-| 7 | Code exists (no tests) | Local | In Progress |
-| 8 | Open PR (no reviews) | GitHub | In Progress |
-| 9 | Feature branch exists | Local | In Progress |
-| 10 | GitHub Issue (in progress label) | GitHub | In Progress |
-| 11 | GitHub Issue (open) | GitHub | Planned |
-| 12 | Architecture decision documented | Transcripts | Planned |
-| 13 | Meeting discussion | Transcripts | Discussed |
+| 2 | PR merged + CI passing | GitHub | Done |
+| 3 | Code + tests on main | Local | Done |
+| 4 | PR merged (no CI info) | GitHub | Done |
+| 5 | Linear issue "Done" | Linear | Done |
+| 6 | Code + tests (any branch) | Local | Done |
+| 7 | Open PR with approvals | GitHub | In Review |
+| 8 | Open PR (review requested) | GitHub | In Review |
+| 9 | Linear issue "In Review" | Linear | In Review |
+| 10 | Code exists (no tests) | Local | In Progress |
+| 11 | Open PR (no reviews) | GitHub | In Progress |
+| 12 | Feature branch exists | Local | In Progress |
+| 13 | Linear issue "In Progress" | Linear | In Progress |
+| 14 | GitHub Issue (in progress label) | GitHub | In Progress |
+| 15 | Linear issue "Todo" | Linear | Todo |
+| 16 | GitHub Issue (open) | GitHub | Backlog |
+| 17 | Linear issue "Backlog" | Linear | Backlog |
+| 18 | Architecture decision documented | Transcripts | Backlog |
+| 19 | Linear issue "Triage" | Linear | Triage |
+| 20 | Meeting discussion | Transcripts | Triage |
 
-**Rule:** Higher priority evidence overrides lower. If GitHub shows PR merged but local shows no tests, use the GitHub evidence (Complete).
+**Rule:** Higher priority evidence overrides lower. If GitHub shows PR merged but local shows no tests, use the GitHub evidence (Done).
 
 ---
 
@@ -179,18 +198,18 @@ Consider updating `.entourage/repos.json` to include missing repositories.
 
 ## Critical Rule
 
-**Never mark a component as "Complete" or "In Progress" based solely on meeting transcripts.**
+**Never mark a component as "Done" or "In Progress" based solely on meeting transcripts.**
 
-Meeting transcripts can only support `Discussed` or `Planned` status. Higher statuses require code evidence from repositories (local or GitHub).
+Meeting transcripts can only support `Triage` or `Backlog` status. Higher statuses require code evidence from repositories (local, GitHub) or issue tracking evidence (Linear).
 
-If no repos are configured, add this note:
-> Repository verification not configured. Maximum verifiable status is "Planned". Add repos to `.entourage/repos.json` for implementation status.
+If no sources are configured, add this note:
+> Source verification not configured. Maximum verifiable status is "Triage". Add repos or Linear to `.entourage/repos.json` for implementation status.
 
 ---
 
 ## Example Output
 
-### With Both Local and GitHub Verification
+### With All Sources (Local, GitHub, Linear)
 
 **Query:** "What's the status of authentication?"
 
@@ -200,10 +219,10 @@ If no repos are configured, add this note:
 | Component | Status | Evidence | Source | Confidence |
 |-----------|--------|----------|--------|------------|
 | Clerk auth | Shipped | PR #42 merged, deployed to prod | GitHub | Very High |
-| User dashboard | Complete | PR #45 merged, CI passing | GitHub + Local | High |
-| Email notifications | In Progress | PR #48 open, 2 approvals | GitHub | High |
-| Analytics | Planned | Issue #52 created | GitHub | High |
-| Notifications | Discussed | Mentioned Dec 21 meeting | Transcripts | High |
+| User dashboard | Done | PR #45 merged, CI passing | GitHub + Local | High |
+| Email notifications | In Review | PR #48 open, 2 approvals | GitHub | High |
+| Analytics | Backlog | Issue #52 created | GitHub | High |
+| Notifications | Triage | Mentioned Dec 21 meeting | Transcripts | High |
 
 Info: Local repo may be behind remote. Consider running `git pull`.
 
@@ -214,13 +233,13 @@ Info: Local repo may be behind remote. Consider running `git pull`.
 - Actions: Build, Test, Lint passed
 - Deployment: prod-v1.2.0 deployed Jan 8 14:32 UTC
 
-**User dashboard (Complete)**
+**User dashboard (Done)**
 - PR: #45 "User dashboard" - merged Jan 10
 - Actions: Build, Test passed
 - Local: Tests found at `src/dashboard/__tests__/`
 ```
 
-### With Local Repository Only
+### With Linear and Local Only
 
 **Query:** "What's the status of authentication?"
 
@@ -229,15 +248,16 @@ Info: Local repo may be behind remote. Consider running `git pull`.
 
 | Component | Status | Evidence | Source | Confidence |
 |-----------|--------|----------|--------|------------|
-| Clerk auth | Complete | Tests passing, merged to main | entourage-web | High |
-| User dashboard | In Progress | Code exists, no tests | entourage-web | Medium |
-| Email notifications | Discussed | Mentioned Dec 21 meeting | Transcripts | High |
+| Clerk auth | Done | Tests passing, merged to main | entourage-web | High |
+| User dashboard | In Progress | ENT-123 In Progress, code exists | Linear + Local | High |
+| Email notifications | Todo | ENT-456 scheduled | Linear | High |
+| Payments | Backlog | ENT-789 in backlog | Linear | High |
 
 ### Notes
 - GitHub verification not configured. Add `github` field to repos for PR/CI/deployment status.
 ```
 
-### Without Repository Configuration
+### Without Any Configuration
 
 **Query:** "What's the status of the database?"
 
@@ -246,14 +266,14 @@ Info: Local repo may be behind remote. Consider running `git pull`.
 
 | Component | Status | Evidence | Source | Confidence |
 |-----------|--------|----------|--------|------------|
-| Database schema | Planned | Architecture decided Dec 22 | Transcripts | Medium |
-| Clerk auth | Discussed | Mentioned Dec 21 | Transcripts | Low |
+| Database schema | Backlog | Architecture decided Dec 22 | Transcripts | Medium |
+| Clerk auth | Triage | Mentioned Dec 21 | Transcripts | Low |
 | API endpoints | Unknown | No mentions found | - | Low |
 
 ### Notes
-- Repository verification not configured. Maximum verifiable status is "Planned".
+- Source verification not configured. Maximum verifiable status is "Triage".
 - Add repos to `.entourage/repos.json` for implementation status.
-- Add `github` field to repos for PR/CI/deployment status.
+- Add `linear` section for issue tracking status.
 ```
 
 ---

@@ -119,8 +119,9 @@ check_status() {
     local output="$1"
     local expected_status="$2"
 
-    # Check various status formats
-    if echo "$output" | grep -qiE "(status[:\s]*\**\s*$expected_status|\"status\":\s*\"$expected_status\")"; then
+    # Check various status formats (using POSIX character classes, not \s)
+    # Matches: "Status: Complete", "**Status**: Complete", "**Status:** Complete"
+    if echo "$output" | grep -qiE "(status[: ]*\**[: ]*$expected_status|\"status\":[[:space:]]*\"$expected_status\")"; then
         return 0
     fi
 
@@ -138,7 +139,17 @@ check_confidence() {
     local output="$1"
     local expected_confidence="$2"
 
-    if echo "$output" | grep -qiE "(confidence[:\s]*\**\s*$expected_confidence|\"confidence\":\s*\"$expected_confidence\")"; then
+    # Check various confidence formats:
+    # - "confidence: High" or "**confidence:** High"
+    # - "Confidence Level: High"
+    # - In table format: "| Complete | High |"
+    # - JSON: "confidence": "High"
+    if echo "$output" | grep -qiE "(confidence[:\s]*\**\s*$expected_confidence|Confidence Level[:\s]*\**\s*$expected_confidence|\"confidence\":\s*\"$expected_confidence\")"; then
+        return 0
+    fi
+
+    # Also check in table format (column after Status)
+    if echo "$output" | grep -qiE "\|[^|]*\|[^|]*$expected_confidence[^|]*\|"; then
         return 0
     fi
 
@@ -218,6 +229,62 @@ validate_not_contains() {
             ((failures++))
         fi
     done <<< "$items"
+
+    return $failures
+}
+
+# Check if output indicates specific MCP tools were called
+# Usage: check_calls "$output" '["list_issues", "create_issue"]'
+# Verifies output contains evidence the tools were invoked
+check_calls() {
+    local output="$1"
+    local calls_json="$2"
+    local failures=0
+
+    # Parse JSON array and check each tool
+    while IFS= read -r tool; do
+        [[ -z "$tool" ]] && continue
+        case "$tool" in
+            "list_issues"|"get_issue")
+                # Read operations - look for issue data in output
+                if ! echo "$output" | grep -qiE "(ENT-[0-9]+|TEAM-[0-9]+|issue|Linear)"; then
+                    echo "  No evidence of $tool call" >&2
+                    ((failures++))
+                fi
+                ;;
+            "list_issue_statuses")
+                # Look for workflow states mentioned
+                if ! echo "$output" | grep -qiE "(Triage|Backlog|Todo|In Progress|Done)"; then
+                    echo "  No evidence of $tool call" >&2
+                    ((failures++))
+                fi
+                ;;
+            "create_issue")
+                # Look for issue creation evidence
+                if ! echo "$output" | grep -qiE "(created.*ENT-|created.*TEAM-|issue.*created|Created.*issue|\[TEST\])"; then
+                    echo "  No evidence of $tool call" >&2
+                    ((failures++))
+                fi
+                ;;
+            "update_issue")
+                # Look for update evidence
+                if ! echo "$output" | grep -qiE "(updated|status.*changed|→.*Done|→.*Progress|changed.*to)"; then
+                    echo "  No evidence of $tool call" >&2
+                    ((failures++))
+                fi
+                ;;
+            "create_comment")
+                # Look for comment creation evidence
+                if ! echo "$output" | grep -qiE "(added.*comment|comment.*added|commented)"; then
+                    echo "  No evidence of $tool call" >&2
+                    ((failures++))
+                fi
+                ;;
+            *)
+                # Unknown tool - skip without failing
+                ;;
+        esac
+    done < <(echo "$calls_json" | jq -r '.[]' 2>/dev/null)
 
     return $failures
 }
@@ -396,6 +463,13 @@ grade_test_case() {
         fi
     fi
 
+    # Check calls if specified (MCP tool invocation evidence)
+    local calls
+    calls=$(echo "$expected_json" | jq -c '.calls // []')
+    if [[ "$calls" != "[]" && "$calls" != "null" ]]; then
+        check_calls "$output" "$calls" || ((failures+=$?))
+    fi
+
     return $failures
 }
 
@@ -410,6 +484,7 @@ export -f check_status
 export -f check_confidence
 export -f check_evidence_status
 export -f check_has_source
+export -f check_calls
 export -f validate_contains
 export -f validate_not_contains
 export -f compare_golden

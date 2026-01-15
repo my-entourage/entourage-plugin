@@ -476,3 +476,176 @@ The 8.33% pass rate (1/11) reflects infrastructure failure, not skill quality.
 ### Reference
 
 Full implementation plan: `/Users/jaredsisk/.claude/plans/glistening-dancing-sprout.md`
+
+---
+
+## Addendum: Reliability Analysis (2026-01-15)
+
+### Why Some Skills Are More Reliable Than Others
+
+After running baseline evaluations with **k=3 trials per test case**, a stark reliability pattern emerged:
+
+```
+Skill                Single    pass@3    pass^3    Reliability
+───────────────────────────────────────────────────────────────
+project-status       100%      100%      100%      ✅ Highly reliable
+local-repo-check     100%      100%      100%      ✅ Highly reliable
+github-repo-check    100%      100%      100%      ✅ Highly reliable
+grounded-query        83%      100%       58%      ⚠️ Moderate
+linear-check           7%       19%       <1%      ❌ Failing
+linear-sync            8%       23%       <1%      ❌ Failing
+```
+
+This analysis examines the **root causes** of these reliability differences.
+
+### Factor 1: External API Dependencies
+
+**Key Insight:** Skills requiring live API calls in test subprocesses fail systematically.
+
+| Category | Skills | API Dependency | Result |
+|----------|--------|----------------|--------|
+| **Reliable** | project-status, local-repo-check, github-repo-check | None (local fixtures) | 100% |
+| **Failing** | linear-check, linear-sync | Linear MCP (requires auth) | 7-8% |
+
+**Root Cause:** The evaluation harness spawns Claude as a subprocess:
+
+```
+Interactive session (MCP authenticated)
+    │
+    └── tests/run.sh
+            │
+            └── claude "test prompt"   ← NEW session, no MCP auth
+```
+
+MCP servers require **interactive authorization** on first connection. Test subprocesses can't complete this flow, so all Linear API calls fail silently.
+
+**Evidence:** The only passing linear-sync test (`identifier-direct-lookup`) works because it tests the skill's **early exit path** when a Linear issue identifier is provided directly—it doesn't need to query the API.
+
+### Factor 2: Test Case Design (Negative vs Positive Cases)
+
+**Key Insight:** Reliable skills test "component not found" scenarios, which are deterministic.
+
+```
+Reliable Skills Test Cases:
+├── project-status
+│   ├── discussed-only      → Expected: "Unknown" (no code evidence)
+│   └── unknown-component   → Expected: "Unknown" (component doesn't exist)
+│
+├── local-repo-check
+│   ├── complete-high-confidence  → Expected: "Complete" (all evidence present)
+│   └── unknown-component         → Expected: "Unknown"
+│
+└── github-repo-check
+    └── unknown-no-evidence → Expected: "Unknown" (no GitHub activity)
+```
+
+These test the **absence of evidence**, which produces consistent outputs regardless of LLM variation.
+
+**Contrast with grounded-query:**
+
+```
+grounded-query Test Cases:
+├── not-found              → "NOT FOUND" (deterministic - nothing to find)   ✓ 100%
+└── status-inflation-prevention → Check for absence of "Complete"            ✗ 67%
+```
+
+The `status-inflation-prevention` test fails intermittently because:
+1. Claude must **generate claims** from the fixture (non-deterministic phrasing)
+2. Assertions use **substring matching** which can't distinguish "NOT complete" from "complete"
+
+### Factor 3: Assertion Precision
+
+**Key Insight:** Substring matching with negation creates false failures.
+
+```json
+// grounded-query/status-inflation-prevention
+{
+  "expectedOutput": {
+    "notContains": ["Complete", "Done", "Finished"],
+    "contains": ["discussed", "planned"]
+  }
+}
+```
+
+**The Problem:**
+
+```
+Claude Output: "The authentication feature is NOT Complete - it was only discussed."
+                                              ^^^^^^^^
+                                              Contains "Complete" → FAIL
+
+Expected behavior: This should PASS (correctly stating NOT complete)
+Actual behavior:   FAIL (substring "Complete" found)
+```
+
+**Why reliable skills avoid this:** They use `status` field assertions, not free-text substring matching:
+
+```json
+// project-status/unknown-component
+{
+  "expectedOutput": {
+    "status": "Unknown",
+    "confidence": "High"
+  }
+}
+```
+
+Structured field assertions are deterministic; free-text substring matching is fragile.
+
+### Factor 4: Compounding Queries and Multi-Step Orchestration
+
+**Key Insight:** Skills requiring multi-step orchestration have more failure points.
+
+| Skill | Steps Required | Failure Points |
+|-------|----------------|----------------|
+| **project-status** | 1. Read local fixtures → 2. Synthesize status | Low |
+| **grounded-query** | 1. Extract claims → 2. Search sources → 3. Verify each claim | Medium |
+| **linear-sync** | 1. Get project-status → 2. Query Linear API → 3. Match issues → 4. Update status | High |
+
+Each step introduces potential variance:
+- **Claim extraction** varies by phrasing ("team chose X" vs "X was selected")
+- **Issue matching** depends on API response ordering
+- **Status mapping** requires semantic interpretation
+
+### Summary: Reliability Factors
+
+| Factor | Reliable Skills | Failing Skills |
+|--------|-----------------|----------------|
+| **API dependencies** | None (local fixtures only) | MCP auth required in subprocess |
+| **Test case design** | Negative cases (deterministic) | Positive cases (requires API data) |
+| **Assertion type** | Structured field matching | Free-text substring matching |
+| **Orchestration complexity** | Single-step | Multi-step with dependencies |
+
+### Recommendations
+
+1. **For linear-check/linear-sync:**
+   - Implement contract tests with mocked API responses
+   - Add API token fallback for local testing
+   - Mark MCP-dependent tests as `pending` for third-party configuration
+
+2. **For grounded-query:**
+   - Replace `notContains` assertions with semantic graders
+   - Use LLM-based grader for claim extraction quality
+   - Consider structured output format for deterministic parsing
+
+3. **For all skills:**
+   - Prioritize negative test cases (higher reliability)
+   - Use structured field assertions over free-text matching
+   - Minimize external dependencies in automated tests
+
+### Metrics Definitions
+
+For reference, the metrics used in this analysis:
+
+| Metric | Formula | Interpretation |
+|--------|---------|----------------|
+| **Single** | `successes / trials` | Raw success probability |
+| **pass@k** | `1 - (1-p)^k` | At least 1 success in k trials |
+| **pass^k** | `p^k` | All k trials succeed |
+
+**Gap Analysis:** A large gap between pass@k and pass^k indicates **inconsistent behavior**. The overall 39% gap (79% → 40%) is dominated by linear-* skill failures.
+
+### Reference
+
+Full evaluation results: `tests/results/dashboard.md`
+Baseline run date: 2026-01-15 (k=3, 75 total trials)

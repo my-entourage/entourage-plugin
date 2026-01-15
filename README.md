@@ -53,6 +53,7 @@ This adds the plugin to `.claude/settings.json`, which can be committed to share
 | Project Status | `/project-status` | Report implementation status with evidence |
 | Local Repo Check | `/local-repo-check` | Scan local repositories for implementation evidence |
 | GitHub Repo Check | `/github-repo-check` | Query GitHub API for PRs, issues, Actions, deployments |
+| Linear Check | `/linear-check` | Query Linear API for issue tracking status |
 
 ### Data Import Skills
 
@@ -74,7 +75,7 @@ This plugin includes session tracking hooks that automatically log Claude Code s
 
 ## Repository Configuration (Optional)
 
-The `/local-repo-check`, `/github-repo-check`, and `/project-status` skills can verify implementation status by scanning local git repositories and querying GitHub. To enable this:
+The `/local-repo-check`, `/github-repo-check`, `/linear-check`, and `/project-status` skills can verify implementation status by scanning local git repositories, querying GitHub, and checking Linear issues. To enable this:
 
 1. Create a `.entourage/` directory in your working project (where you run Claude Code)
 
@@ -85,6 +86,10 @@ The `/local-repo-check`, `/github-repo-check`, and `/project-status` skills can 
   "github": {
     "token": "ghp_xxxxxxxxxxxx",
     "defaultOrg": "my-org"
+  },
+  "linear": {
+    "teamId": "TEAM",
+    "workspace": "my-workspace"
   },
   "repos": [
     {
@@ -108,6 +113,11 @@ Top-level `github` object (optional):
 - `token`: Personal access token (only needed if `gh` CLI is not installed)
 - `defaultOrg`: Default organization for repo lookups
 
+Top-level `linear` object (optional):
+- `teamId`: Linear team key (e.g., "ENG", "PROD")
+- `workspace`: Linear workspace slug from your Linear URL
+- `token`: API token (only needed if Linear MCP is not configured)
+
 Per-repo fields:
 - `name` (required): Display name for the repository
 - `path` (optional): Local filesystem path for local scanning (supports `~`)
@@ -125,8 +135,14 @@ Per-repo fields:
 - Verifies GitHub Actions workflow status
 - Checks deployments and releases
 
+**What Linear scanning does (`linear` configured):**
+- Queries issues by component name
+- Maps workflow states (Triage, Backlog, Todo, In Progress, In Review, Done, Canceled)
+- Checks assignees and due dates
+- Uses Linear MCP if available, falls back to API token
+
 **Without configuration:**
-The skills still work but limit status to "Discussed" or "Planned" (transcript evidence only).
+The skills still work but limit status to "Triage" (transcript evidence only).
 
 See `examples/repos.json.example` for a template.
 
@@ -232,6 +248,45 @@ Then restart Claude Code to pick up the changes.
 
 **Important:** The directory name should match the `name` field in frontmatter. The file **must** be named `SKILL.md`.
 
+## Linear Authentication
+
+The `/linear-check` skill needs access to the Linear API. There are two options:
+
+### Option 1: Linear MCP (Recommended)
+
+Configure the Linear MCP server in `~/.claude.json` or project `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "linear": {
+      "type": "sse",
+      "url": "https://mcp.linear.app/sse"
+    }
+  }
+}
+```
+
+This uses OAuth via browser - no token stored in config files.
+
+### Option 2: API Token
+
+If Linear MCP is unavailable, add a token to `.entourage/repos.json`:
+
+```json
+{
+  "linear": {
+    "token": "lin_api_xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "teamId": "TEAM",
+    "workspace": "my-workspace"
+  }
+}
+```
+
+**Generate a token:** Go to https://linear.app/settings/api and create a Personal API Key.
+
+---
+
 ## Plugin Structure
 
 ```
@@ -248,11 +303,18 @@ entourage-plugin/
 │   ├── grounded-query/
 │   ├── project-status/
 │   ├── local-repo-check/
+│   │   └── SKILL.md
 │   ├── github-repo-check/
-│   ├── import-hyprnote/     # NEW: Hyprnote transcript import
-│   ├── import-notion/       # NEW: Notion page import
+│   │   └── SKILL.md
+│   ├── linear-check/
+│   │   └── SKILL.md
+│   ├── import-hyprnote/
+│   │   └── SKILL.md
+│   ├── import-notion/
+│   │   └── SKILL.md
 │   │   └── scripts/         # Python exporter/converter
-│   └── update-timeline/     # NEW: Chronological events indexer
+│   └── update-timeline/
+│       └── SKILL.md
 │       └── sources/         # Source registry
 ├── examples/
 │   └── config.json.example  # Configuration template
