@@ -1,6 +1,6 @@
 # entourage-plugin
 
-Shared Claude Code skills for the Entourage team. This repository is a Claude Code **plugin** containing reusable skills that can be invoked with `/skill-name`.
+Comprehensive Claude Code plugin for context management, verification, data import, and session tracking. Contains reusable skills that can be invoked with `/skill-name`.
 
 ## Installation
 
@@ -45,12 +45,32 @@ This adds the plugin to `.claude/settings.json`, which can be committed to share
 
 ## Available Skills
 
+### Verification Skills
+
 | Skill | Command | Description |
 |-------|---------|-------------|
 | Grounded Query | `/grounded-query` | Verify claims against source documents |
 | Project Status | `/project-status` | Report implementation status with evidence |
 | Local Repo Check | `/local-repo-check` | Scan local repositories for implementation evidence |
 | GitHub Repo Check | `/github-repo-check` | Query GitHub API for PRs, issues, Actions, deployments |
+
+### Data Import Skills
+
+| Skill | Command | Description |
+|-------|---------|-------------|
+| Import Hyprnote | `/import-hyprnote` | Import Hyprnote meeting transcripts to context repositories |
+| Import Notion | `/import-notion` | Export and convert Notion pages to local markdown |
+| Update Timeline | `/update-timeline` | Process transcripts and build chronological events index |
+
+## Session Tracking
+
+This plugin includes session tracking hooks that automatically log Claude Code sessions to your project. Session data is stored in `.claude/sessions/{nickname}/`.
+
+**To enable:** Set `GITHUB_NICKNAME` environment variable in your shell profile.
+
+**To disable:**
+- Set `CLAUDE_LOGGER_DISABLED=1` environment variable, or
+- Add `"sessionLogging": false` to `.entourage/config.json`
 
 ## Repository Configuration (Optional)
 
@@ -217,16 +237,25 @@ Then restart Claude Code to pick up the changes.
 ```
 entourage-plugin/
 ├── .claude-plugin/
-│   └── plugin.json          # Plugin manifest
+│   ├── plugin.json          # Plugin manifest
+│   └── marketplace.json     # Marketplace listing
+├── hooks/
+│   └── hooks.json           # Session tracking hooks
+├── scripts/
+│   ├── session-start.sh     # Session start hook
+│   └── session-end.sh       # Session end hook
 ├── skills/
 │   ├── grounded-query/
-│   │   └── SKILL.md
 │   ├── project-status/
-│   │   └── SKILL.md
 │   ├── local-repo-check/
-│   │   └── SKILL.md
-│   └── github-repo-check/
-│       └── SKILL.md
+│   ├── github-repo-check/
+│   ├── import-hyprnote/     # NEW: Hyprnote transcript import
+│   ├── import-notion/       # NEW: Notion page import
+│   │   └── scripts/         # Python exporter/converter
+│   └── update-timeline/     # NEW: Chronological events indexer
+│       └── sources/         # Source registry
+├── examples/
+│   └── config.json.example  # Configuration template
 └── README.md
 ```
 
