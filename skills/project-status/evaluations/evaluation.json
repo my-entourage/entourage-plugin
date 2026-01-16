@@ -13,7 +13,10 @@
       },
       "expectedBehavior": "Returns transcript-only status with note about configuring repos",
       "expectedOutput": {
-        "contains": ["Repository verification not configured", ".entourage/repos.json"],
+        "contains": [
+          "Repository verification not configured",
+          ".entourage/repos.json"
+        ],
         "maxStatus": "Planned"
       }
     },
@@ -28,9 +31,14 @@
       },
       "expectedBehavior": "Returns Discussed or Planned status based on transcript evidence only",
       "expectedOutput": {
-        "status": ["Discussed", "Planned"],
+        "status": [
+          "Discussed",
+          "Planned"
+        ],
         "source": "Transcripts",
-        "contains": ["Maximum verifiable status is"]
+        "contains": [
+          "Maximum verifiable status is"
+        ]
       }
     },
     {
@@ -41,15 +49,26 @@
       "pendingReason": "Needs fixture with path but no github field",
       "setup": {
         "config": {
-          "repos": [{"name": "my-app", "path": "~/code/my-app"}]
+          "repos": [
+            {
+              "name": "my-app",
+              "path": "~/code/my-app"
+            }
+          ]
         },
         "description": "repos.json has path but no github field"
       },
       "expectedBehavior": "Uses local-repo-check only, notes GitHub not configured",
       "expectedOutput": {
-        "invokes": ["/local-repo-check"],
-        "notInvokes": ["/github-repo-check"],
-        "contains": ["GitHub verification not configured"]
+        "invokes": [
+          "/local-repo-check"
+        ],
+        "notInvokes": [
+          "/github-repo-check"
+        ],
+        "contains": [
+          "GitHub verification not configured"
+        ]
       }
     },
     {
@@ -60,15 +79,26 @@
       "pendingReason": "Needs fixture with github but no path field",
       "setup": {
         "config": {
-          "repos": [{"name": "my-app", "github": "org/my-app"}]
+          "repos": [
+            {
+              "name": "my-app",
+              "github": "org/my-app"
+            }
+          ]
         },
         "description": "repos.json has github but no path field"
       },
       "expectedBehavior": "Uses github-repo-check only, notes local not configured",
       "expectedOutput": {
-        "invokes": ["/github-repo-check"],
-        "notInvokes": ["/local-repo-check"],
-        "contains": ["Local repository not configured"]
+        "invokes": [
+          "/github-repo-check"
+        ],
+        "notInvokes": [
+          "/local-repo-check"
+        ],
+        "contains": [
+          "Local repository not configured"
+        ]
       }
     },
     {
@@ -79,14 +109,26 @@
       "pendingReason": "Requires sub-skill orchestration with mocked GitHub API responses",
       "setup": {
         "config": {
-          "repos": [{"name": "my-app", "path": "~/code/my-app", "github": "org/my-app"}]
+          "repos": [
+            {
+              "name": "my-app",
+              "path": "~/code/my-app",
+              "github": "org/my-app"
+            }
+          ]
         },
         "description": "Full configuration with both path and github fields"
       },
       "expectedBehavior": "Invokes both sub-skills and combines evidence",
       "expectedOutput": {
-        "invokes": ["/local-repo-check", "/github-repo-check"],
-        "contains": ["Evidence", "Source"]
+        "invokes": [
+          "/local-repo-check",
+          "/github-repo-check"
+        ],
+        "contains": [
+          "Evidence",
+          "Source"
+        ]
       }
     },
     {
@@ -102,7 +144,10 @@
       "expectedOutput": {
         "status": "Shipped",
         "confidence": "Very High",
-        "contains": ["deployed", "production"]
+        "contains": [
+          "deployed",
+          "production"
+        ]
       }
     },
     {
@@ -117,8 +162,15 @@
       "expectedBehavior": "Returns Complete status with Very High confidence",
       "expectedOutput": {
         "status": "Complete",
-        "confidence": ["Very High", "High"],
-        "contains": ["PR", "merged", "CI"]
+        "confidence": [
+          "Very High",
+          "High"
+        ],
+        "contains": [
+          "PR",
+          "merged",
+          "CI"
+        ]
       }
     },
     {
@@ -149,7 +201,10 @@
       "expectedBehavior": "Returns In Progress status",
       "expectedOutput": {
         "status": "In Progress",
-        "contains": ["PR", "open"]
+        "contains": [
+          "PR",
+          "open"
+        ]
       }
     },
     {
@@ -165,7 +220,10 @@
       "expectedOutput": {
         "status": "In Progress",
         "confidence": "Medium",
-        "contains": ["no tests", "Code exists"]
+        "contains": [
+          "no tests",
+          "Code exists"
+        ]
       }
     },
     {
@@ -181,7 +239,9 @@
       "expectedOutput": {
         "status": "Planned",
         "confidence": "High",
-        "contains": ["Issue"]
+        "contains": [
+          "Issue"
+        ]
       }
     },
     {
@@ -195,7 +255,10 @@
       "expectedOutput": {
         "status": "Discussed",
         "source": "Transcripts",
-        "contains": ["mentioned", "meeting"]
+        "contains": [
+          "mentioned",
+          "meeting"
+        ]
       }
     },
     {
@@ -208,7 +271,11 @@
       "expectedBehavior": "Returns Unknown status",
       "expectedOutput": {
         "status": "Unknown",
-        "contains": ["Unknown"]
+        "contains": [
+          "Unknown",
+          "No evidence",
+          "not found"
+        ]
       }
     },
     {
@@ -222,7 +289,14 @@
       },
       "expectedBehavior": "Returns summary table with all components",
       "expectedOutput": {
-        "contains": ["auth", "dashboard", "payments", "notifications", "Component", "Status"],
+        "contains": [
+          "auth",
+          "dashboard",
+          "payments",
+          "notifications",
+          "Component",
+          "Status"
+        ],
         "format": "table"
       }
     },
@@ -239,7 +313,10 @@
       "expectedOutput": {
         "status": "Complete",
         "source": "GitHub",
-        "contains": ["Local repo may be behind remote", "git pull"]
+        "contains": [
+          "Local repo may be behind remote",
+          "git pull"
+        ]
       }
     }
   ]

@@ -1,0 +1,11 @@
+{
+  "sessionLogging": true,
+  "projects": [
+    {
+      "name": "example-context",
+      "path": "~/Documents/code/example-context",
+      "description": "Example project for demonstration",
+      "keywords": ["example", "demo", "test"]
+    }
+  ]
+}

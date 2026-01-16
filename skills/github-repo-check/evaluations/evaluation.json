@@ -13,7 +13,10 @@
       },
       "expectedBehavior": "Returns message about missing configuration",
       "expectedOutput": {
-        "contains": ["No repository configuration found", ".entourage/repos.json"]
+        "contains": [
+          "No repository configuration found",
+          ".entourage/repos.json"
+        ]
       }
     },
     {
@@ -24,13 +27,21 @@
       "pendingReason": "Needs fixture with repos.json without github field",
       "setup": {
         "config": {
-          "repos": [{"name": "my-repo", "path": "~/code/my-repo"}]
+          "repos": [
+            {
+              "name": "my-repo",
+              "path": "~/code/my-repo"
+            }
+          ]
         },
         "description": "repos.json exists but repos have no github field"
       },
       "expectedBehavior": "Returns message about adding github field to repos",
       "expectedOutput": {
-        "contains": ["No GitHub configuration found", "Add `github` field"]
+        "contains": [
+          "No GitHub configuration found",
+          "Add `github` field"
+        ]
       }
     },
     {
@@ -44,7 +55,10 @@
       },
       "expectedBehavior": "Returns authentication instructions",
       "expectedOutput": {
-        "contains": ["gh CLI not authenticated", "gh auth login"]
+        "contains": [
+          "gh CLI not authenticated",
+          "gh auth login"
+        ]
       }
     },
     {
@@ -58,7 +72,11 @@
       },
       "expectedBehavior": "Returns 401 error with remediation steps",
       "expectedOutput": {
-        "contains": ["401 Unauthorized", "gh auth login", "check your token"]
+        "contains": [
+          "401 Unauthorized",
+          "gh auth login",
+          "check your token"
+        ]
       }
     },
     {
@@ -72,7 +90,10 @@
       },
       "expectedBehavior": "Returns rate limit message with reset time",
       "expectedOutput": {
-        "contains": ["rate limit reached", "Resets at"]
+        "contains": [
+          "rate limit reached",
+          "Resets at"
+        ]
       }
     },
     {
@@ -83,13 +104,22 @@
       "pendingReason": "Requires mock GitHub API response",
       "setup": {
         "config": {
-          "repos": [{"name": "my-repo", "path": "~/code/my-repo", "github": "owner/nonexistent-repo"}]
+          "repos": [
+            {
+              "name": "my-repo",
+              "path": "~/code/my-repo",
+              "github": "owner/nonexistent-repo"
+            }
+          ]
         },
         "description": "GitHub API returns 404 for repository"
       },
       "expectedBehavior": "Returns not found message with config suggestion",
       "expectedOutput": {
-        "contains": ["not found or not accessible", "Check `github` field"]
+        "contains": [
+          "not found or not accessible",
+          "Check `github` field"
+        ]
       }
     },
     {
@@ -207,7 +237,10 @@
       "expectedBehavior": "Returns Unknown status, defers to /local-repo-check",
       "expectedOutput": {
         "status": "Unknown",
-        "contains": ["No GitHub evidence", "local-repo-check"]
+        "contains": [
+          "No GitHub evidence",
+          "local-repo-check"
+        ]
       }
     },
     {
@@ -221,7 +254,14 @@
       },
       "expectedBehavior": "Returns summary table with all three components",
       "expectedOutput": {
-        "contains": ["Summary", "auth", "dashboard", "payments", "Component", "Status"]
+        "contains": [
+          "Summary",
+          "auth",
+          "dashboard",
+          "payments",
+          "Component",
+          "Status"
+        ]
       }
     },
     {
@@ -235,7 +275,13 @@
       },
       "expectedBehavior": "Returns formatted table with GitHub Details section",
       "expectedOutput": {
-        "contains": ["GitHub Scan:", "clerk-auth", "Repository", "Evidence", "GitHub Details"]
+        "contains": [
+          "GitHub Scan:",
+          "clerk-auth",
+          "Repository",
+          "Evidence",
+          "GitHub Details"
+        ]
       }
     },
     {
@@ -249,7 +295,9 @@
       },
       "expectedBehavior": "Finds component regardless of input case",
       "expectedOutput": {
-        "contains": ["auth"]
+        "contains": [
+          "auth"
+        ]
       }
     },
     {
@@ -261,15 +309,26 @@
       "setup": {
         "config": {
           "repos": [
-            {"name": "frontend", "path": "~/code/frontend", "github": "org/frontend"},
-            {"name": "backend", "path": "~/code/backend", "github": "org/backend"}
+            {
+              "name": "frontend",
+              "path": "~/code/frontend",
+              "github": "org/frontend"
+            },
+            {
+              "name": "backend",
+              "path": "~/code/backend",
+              "github": "org/backend"
+            }
           ]
         },
         "description": "auth component has evidence in both frontend and backend repos"
       },
       "expectedBehavior": "Aggregates evidence from all repositories, shows each repo's status",
       "expectedOutput": {
-        "contains": ["org/frontend", "org/backend"]
+        "contains": [
+          "org/frontend",
+          "org/backend"
+        ]
       }
     }
   ]

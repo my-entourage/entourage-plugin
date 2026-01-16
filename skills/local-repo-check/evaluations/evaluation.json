@@ -13,7 +13,10 @@
       },
       "expectedBehavior": "Returns message about missing configuration",
       "expectedOutput": {
-        "contains": ["No repository configuration found", ".entourage/repos.json"]
+        "contains": [
+          "No repository configuration found",
+          ".entourage/repos.json"
+        ]
       }
     },
     {
@@ -24,12 +27,19 @@
       "pendingReason": "Needs fixture with repos.json pointing to nonexistent path",
       "setup": {
         "config": {
-          "repos": [{"name": "bad-repo", "path": "/nonexistent/path"}]
+          "repos": [
+            {
+              "name": "bad-repo",
+              "path": "/nonexistent/path"
+            }
+          ]
         }
       },
       "expectedBehavior": "Reports inaccessible repo, continues gracefully",
       "expectedOutput": {
-        "contains": ["not accessible"]
+        "contains": [
+          "not accessible"
+        ]
       }
     },
     {
@@ -98,7 +108,12 @@
       },
       "expectedBehavior": "Returns summary table with all three components",
       "expectedOutput": {
-        "contains": ["Summary", "auth", "dashboard", "payments"]
+        "contains": [
+          "Summary",
+          "auth",
+          "dashboard",
+          "payments"
+        ]
       }
     },
     {
@@ -112,8 +127,15 @@
       },
       "expectedBehavior": "Converts CamelCase to snake_case and finds the file",
       "expectedOutput": {
-        "contains": ["user_auth"],
-        "patternsSearched": ["**/*UserAuth*", "**/*user_auth*", "**/*user-auth*", "**/*userauth*"]
+        "contains": [
+          "user_auth"
+        ],
+        "patternsSearched": [
+          "**/*UserAuth*",
+          "**/*user_auth*",
+          "**/*user-auth*",
+          "**/*userauth*"
+        ]
       }
     },
     {
@@ -124,13 +146,23 @@
       "pendingReason": "Needs fixture with tilde path in repos.json",
       "setup": {
         "config": {
-          "repos": [{"name": "home-repo", "path": "~/code/repo"}]
+          "repos": [
+            {
+              "name": "home-repo",
+              "path": "~/code/repo"
+            }
+          ]
         }
       },
       "expectedBehavior": "Expands ~ to home directory path",
       "expectedOutput": {
-        "contains": ["home-repo", "/code/repo"],
-        "notContains": ["~/code/repo"]
+        "contains": [
+          "home-repo",
+          "/code/repo"
+        ],
+        "notContains": [
+          "~/code/repo"
+        ]
       }
     },
     {
@@ -144,7 +176,9 @@
       },
       "expectedBehavior": "Falls back to file existence checks only",
       "expectedOutput": {
-        "contains": ["Could not access git history"]
+        "contains": [
+          "Could not access git history"
+        ]
       }
     }
   ]

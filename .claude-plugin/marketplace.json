@@ -1,8 +1,8 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "entourage-marketplace",
-  "version": "1.0.0",
-  "description": "Shared skills for the Entourage team - grounded queries and project status reporting",
+  "version": "1.1.0",
+  "description": "Comprehensive toolkit for context management, verification, and session tracking",
   "owner": {
     "name": "My Entourage",
     "email": "blaze46593@gmail.com",
@@ -11,18 +11,20 @@
   "plugins": [
     {
       "name": "entourage",
-      "description": "Shared skills for the Entourage team - grounded queries and project status reporting",
-      "version": "1.0.0",
-      "author": {
-        "name": "My Entourage",
-        "email": "blaze46593@gmail.com"
-      },
+      "description": "Skills for grounded queries, project status, data import, and session tracking",
+      "version": "1.1.0",
       "source": {
         "source": "github",
         "repo": "my-entourage/entourage-plugin"
       },
       "category": "productivity",
-      "tags": ["project-status", "grounded-query", "github", "verification"]
+      "tags": [
+        "project-status",
+        "grounded-query",
+        "import",
+        "timeline",
+        "session-tracking"
+      ]
     }
   ]
 }
