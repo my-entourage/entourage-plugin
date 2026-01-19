@@ -19,7 +19,7 @@ Apply when user asks:
 
 ## Prerequisites
 
-- Linear MCP configured or API token in `.entourage/repos.json`
+- Linear MCP configured or `LINEAR_API_TOKEN` in `.env.local`
 - At least one evidence source configured (local repo, GitHub, or Linear)
 
 ---
@@ -248,7 +248,7 @@ Read Linear settings from `.entourage/repos.json`:
 
 ## API Token Fallback (When MCP Unavailable)
 
-When Linear MCP is not available (e.g., in automated tests), fall back to direct GraphQL API calls using token from `.entourage/repos.json`.
+When Linear MCP is not available (e.g., in automated tests), fall back to direct GraphQL API calls using `LINEAR_API_TOKEN` from `.env.local`.
 
 ### MCP Detection Protocol
 

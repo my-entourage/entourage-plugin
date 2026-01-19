@@ -1,7 +1,11 @@
 {
+  "_comment": "This file can be committed - no secrets. Tokens go in .env.local",
   "github": {
-    "token": "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     "defaultOrg": "my-org"
+  },
+  "linear": {
+    "teamId": "TEAM",
+    "workspace": "my-workspace"
   },
   "repos": [
     {

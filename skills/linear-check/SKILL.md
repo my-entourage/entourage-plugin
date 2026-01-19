@@ -34,14 +34,20 @@ Check if Linear MCP tools are available by attempting to use a Linear MCP tool. 
 
 ### Step 2: Fallback to API Token
 
-If Linear MCP is unavailable, fall back to token from `.entourage/repos.json`:
+If Linear MCP is unavailable, fall back to `LINEAR_API_TOKEN` environment variable from `.env.local`:
+
+```bash
+# .env.local
+LINEAR_API_TOKEN=lin_api_xxxxxxxxxxxx
+```
+
+Also ensure `.entourage/repos.json` has the team configuration:
 
 ```json
 {
   "linear": {
-    "token": "lin_api_...",
-    "teamId": "ENT",
-    "workspace": "myentourage"
+    "teamId": "TEAM",
+    "workspace": "my-workspace"
   }
 }
 ```
@@ -68,7 +74,7 @@ When executing queries, follow this detection flow:
 ```
 Attempting: mcp__linear__list_teams
 ├── Success → Use MCP for all operations
-└── Failure → Check .entourage/repos.json for API token
+└── Failure → Check LINEAR_API_TOKEN env var from .env.local
 ```
 
 ---
@@ -223,13 +229,13 @@ Linear uses these state types:
 
 ### MCP Not Available, No Token
 ```
-> Linear MCP not configured and no API token found. Configure Linear MCP or add token to `.entourage/repos.json`.
+> Linear MCP not configured and no API token found. Configure Linear MCP or add LINEAR_API_TOKEN to `.env.local`.
 ```
 
 ### Token Invalid/Expired
 If API returns authentication error:
 ```
-> Linear API error: Authentication failed. Check your token in `.entourage/repos.json`.
+> Linear API error: Authentication failed. Check LINEAR_API_TOKEN in `.env.local`.
 ```
 
 ### Rate Limited

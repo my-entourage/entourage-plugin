@@ -73,8 +73,8 @@ The `/local-repo-check`, `/github-repo-check`, `/linear-check`, and `/project-st
 
 ```json
 {
+  "_comment": "This file can be committed - no secrets. Tokens go in .env.local",
   "github": {
-    "token": "ghp_xxxxxxxxxxxx",
     "defaultOrg": "my-org"
   },
   "linear": {
@@ -100,13 +100,11 @@ The `/local-repo-check`, `/github-repo-check`, `/linear-check`, and `/project-st
 **Configuration fields:**
 
 Top-level `github` object (optional):
-- `token`: Personal access token (only needed if `gh` CLI is not installed)
 - `defaultOrg`: Default organization for repo lookups
 
 Top-level `linear` object (optional):
 - `teamId`: Linear team key (e.g., "ENG", "PROD")
 - `workspace`: Linear workspace slug from your Linear URL
-- `token`: API token (only needed if Linear MCP is not configured)
 
 Per-repo fields:
 - `name` (required): Display name for the repository
@@ -138,6 +136,45 @@ See `examples/repos.json.example` for a template.
 
 ---
 
+## Authentication & Security
+
+### Preferred Authentication Order
+
+For all external services, the plugin follows this authentication hierarchy:
+
+| Priority | Method | Why Preferred |
+|----------|--------|---------------|
+| 1st | **MCP servers** | OAuth via browser, no stored tokens |
+| 2nd | **CLI tools** | Credentials in system keychain (gh, gcloud) |
+| 3rd | **Environment variables** | Tokens in `.env.local`, gitignored |
+
+This approach keeps secrets out of config files and version control.
+
+### Service-Specific Setup
+
+| Service | Preferred | Fallback |
+|---------|-----------|----------|
+| Linear | Linear MCP (`mcp.linear.app`) | `LINEAR_API_TOKEN` in `.env.local` |
+| GitHub | `gh` CLI (`gh auth login`) | `GITHUB_TOKEN` in `.env.local` |
+
+### Token Storage (When Needed)
+
+If MCP/CLI options aren't available, store tokens in `.env.local`:
+
+```bash
+# .env.local - NEVER commit this file
+LINEAR_API_TOKEN=lin_api_xxxxxxxxxxxx
+GITHUB_TOKEN=ghp_xxxxxxxxxxxx
+```
+
+Ensure `.env.local` is in your `.gitignore`:
+```
+.env.local
+.env*.local
+```
+
+---
+
 ## GitHub Authentication
 
 The `/github-repo-check` skill needs access to the GitHub API. There are two options:
@@ -166,26 +203,22 @@ gh auth status
 gh api user/orgs --jq '.[].login'  # List your orgs
 ```
 
-### Option 2: Personal Access Token
+### Option 2: Environment Variable
 
-If `gh` CLI is unavailable, add a token to `.entourage/repos.json`:
+If `gh` CLI is unavailable, add a token to `.env.local`:
 
-```json
-{
-  "github": {
-    "token": "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-  },
-  "repos": [...]
-}
+```bash
+# .env.local - NEVER commit this file
+GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 **Generate a PAT:**
 1. Go to https://github.com/settings/tokens
 2. Click "Generate new token (classic)"
 3. Select scopes: `repo`, `read:org`, `workflow`
-4. Copy the token to your config
+4. Copy the token to `.env.local`
 
-**Important:** Add `.entourage/repos.json` to your `.gitignore` if it contains a token.
+See [Authentication & Security](#authentication--security) for more details.
 
 ---
 
@@ -259,21 +292,18 @@ Configure the Linear MCP server in `~/.claude.json` or project `.mcp.json`:
 
 This uses OAuth via browser - no token stored in config files.
 
-### Option 2: API Token
+### Option 2: Environment Variable
 
-If Linear MCP is unavailable, add a token to `.entourage/repos.json`:
+If Linear MCP is unavailable, add a token to `.env.local`:
 
-```json
-{
-  "linear": {
-    "token": "lin_api_xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-    "teamId": "TEAM",
-    "workspace": "my-workspace"
-  }
-}
+```bash
+# .env.local - NEVER commit this file
+LINEAR_API_TOKEN=lin_api_xxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 **Generate a token:** Go to https://linear.app/settings/api and create a Personal API Key.
+
+See [Authentication & Security](#authentication--security) for more details.
 
 ---
 
