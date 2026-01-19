@@ -2,7 +2,6 @@
   "repos": [
     {
       "name": "entourage-plugin",
-      "path": ".",
       "github": "my-entourage/entourage-plugin"
     }
   ]

@@ -1,8 +1,7 @@
 {
   "repos": [
     {
-      "name": "mock-repo",
-      "path": "./mock-repo"
+      "name": "mock-repo"
     }
   ]
 }

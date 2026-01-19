@@ -19,7 +19,7 @@ Apply when user asks:
 
 ## Prerequisites
 
-- Linear MCP configured or API token in `.entourage/repos.json`
+- Linear MCP configured or `LINEAR_API_TOKEN` in `.env.local`
 - At least one evidence source configured (local repo, GitHub, or Linear)
 
 ---
@@ -39,8 +39,18 @@ Parse the output table to extract:
 
 ### Step 2: Query Linear Current State
 
+**Resolve team identifier:**
+Before querying issues, resolve the configured `teamName` to a valid team:
+1. Call `mcp__linear__list_teams` to get available teams
+2. Match configured `teamName` against team name, key, or UUID
+3. Use the matched team's `name` for all subsequent queries
+
+This allows users to configure any of: team key ("TEAM"), team name ("My Team"), or UUID.
+
+**Important:** The Linear MCP `team` parameter only accepts team **name** or **UUID**, not team keys. Always resolve keys via `list_teams` first.
+
 1. Get team's workflow states:
-   - Use `mcp__linear__list_issue_statuses` with teamId from config
+   - Use `mcp__linear__list_issue_statuses` with the resolved team name
 
 2. For each component, search for matching Linear issues:
    - Use `mcp__linear__list_issues` with query parameter set to component name
@@ -58,7 +68,7 @@ For each component from project-status:
 - Score: 60
 
 **Tertiary: Identifier Match**
-- If component looks like "ENT-123", query by identifier directly
+- If component looks like "TEAM-123", query by identifier directly
 - Use `mcp__linear__get_issue` with the identifier
 
 **No Match**
@@ -84,14 +94,14 @@ Output a preview table showing all proposed changes:
 
 | Component | Issue | Current | Proposed | Evidence |
 |-----------|-------|---------|----------|----------|
-| auth | ENT-123 | Backlog | In Progress | Feature branch exists |
-| dashboard | ENT-456 | In Progress | Done | PR #78 merged, CI passing |
+| auth | TEAM-123 | Backlog | In Progress | Feature branch exists |
+| dashboard | TEAM-456 | In Progress | Done | PR #78 merged, CI passing |
 
 ### No Change Needed
-- ENT-789 (payments): Already at Done
+- TEAM-789 (payments): Already at Done
 
 ### Skipped (Linear status higher)
-- ENT-111 (analytics): Linear at Done, evidence shows In Progress
+- TEAM-111 (analytics): Linear at Done, evidence shows In Progress
 
 ### No Linear Issue Found
 - notifications: No matching issue
@@ -115,7 +125,7 @@ If `LINEAR_SYNC_AUTO_CONFIRM=1` environment variable is set:
    - Auto-archived by Linear after the configured period
 
    Workspace: {workspace_name}
-   Team: {team_id}
+   Team: {team_name}
 
    Consider creating a dedicated test workspace if you're concerned about
    affecting your production workspace.
@@ -157,11 +167,11 @@ Output final results:
 ### Updated (2)
 | Issue | Previous | New | Evidence |
 |-------|----------|-----|----------|
-| ENT-123 | Backlog | In Progress | Feature branch exists |
-| ENT-456 | In Progress | Done | PR #78 merged, CI passing |
+| TEAM-123 | Backlog | In Progress | Feature branch exists |
+| TEAM-456 | In Progress | Done | PR #78 merged, CI passing |
 
 ### Skipped (1)
-- ENT-789: Linear status (Done) already higher than evidence (In Progress)
+- TEAM-789: Linear status (Done) already higher than evidence (In Progress)
 
 ### No Match (1)
 - notifications: No Linear issue found
@@ -227,11 +237,13 @@ Read Linear settings from `.entourage/repos.json`:
 ```json
 {
   "linear": {
-    "teamId": "TEAM",
+    "teamName": "Team",
     "workspace": "my-workspace"
   }
 }
 ```
+
+**Note:** `teamName` accepts team name ("My Team"), team key ("TEAM"), or UUID.
 
 ### Authentication
 
@@ -248,7 +260,7 @@ Read Linear settings from `.entourage/repos.json`:
 
 ## API Token Fallback (When MCP Unavailable)
 
-When Linear MCP is not available (e.g., in automated tests), fall back to direct GraphQL API calls using token from `.entourage/repos.json`.
+When Linear MCP is not available (e.g., in automated tests), fall back to direct GraphQL API calls using `LINEAR_API_TOKEN` from `.env.local`.
 
 ### MCP Detection Protocol
 
@@ -335,12 +347,12 @@ When running automated tests that create/modify Linear issues:
 
 ### Team Not Found
 ```
-> Linear team "TEAM" not found. Check `teamId` in `.entourage/repos.json`.
+> Linear team "TEAM" not found. Check `teamName` in `.entourage/repos.json`.
 ```
 
 ### Permission Denied
 ```
-> Cannot update issue ENT-123: Insufficient permissions.
+> Cannot update issue TEAM-123: Insufficient permissions.
 > Check your Linear role allows issue editing.
 ```
 

@@ -1,3 +1,4 @@
+# User's personal config directory
 .entourage/
 .env
 *.log
@@ -13,4 +14,5 @@ skills/*/integration/fixtures/local-*
 # Exception: local-example is a template that should be committed
 !skills/*/evaluations/fixtures/local-example/
 
+# User's personal thoughts directory
 thoughts/conversations_claude

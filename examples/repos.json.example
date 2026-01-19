@@ -1,18 +1,20 @@
 {
+  "_comment": "Shared config - safe to commit. Local paths go in paths.local.json, tokens in .env.local",
   "github": {
-    "token": "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     "defaultOrg": "my-org"
+  },
+  "linear": {
+    "teamName": "My Team",
+    "workspace": "my-workspace"
   },
   "repos": [
     {
       "name": "my-web-app",
-      "path": "~/Documents/code/my-web-app",
       "mainBranch": "main",
       "github": "my-org/my-web-app"
     },
     {
       "name": "my-api",
-      "path": "~/Documents/code/my-api",
       "mainBranch": "main",
       "github": "my-org/my-api"
     }

@@ -2,13 +2,12 @@
   "repos": [
     {
       "name": "mock-repo",
-      "path": "./mock-repo",
       "github": "my-org/my-project",
       "mainBranch": "main"
     }
   ],
   "linear": {
-    "teamId": "TEAM",
+    "teamName": "TEAM",
     "workspace": "my-workspace"
   }
 }

@@ -40,14 +40,11 @@ gh auth status 2>/dev/null && echo "gh available" || echo "gh not available"
 Use `gh api` commands directly. No additional configuration needed.
 
 **If gh CLI is unavailable:**
-Fall back to token from `.entourage/repos.json`:
+Fall back to `GITHUB_TOKEN` environment variable from `.env.local`:
 
-```json
-{
-  "github": {
-    "token": "ghp_..."
-  }
-}
+```bash
+# .env.local
+GITHUB_TOKEN=ghp_xxxxxxxxxxxx
 ```
 
 Use curl with the token:
@@ -185,7 +182,7 @@ Apply this decision tree to determine component status:
 
 ### gh CLI Not Authenticated
 ```
-> gh CLI not authenticated. Run `gh auth login` or add `github.token` to `.entourage/repos.json`.
+> gh CLI not authenticated. Run `gh auth login` or add `GITHUB_TOKEN` to `.env.local`.
 ```
 
 ### Token Invalid/Expired

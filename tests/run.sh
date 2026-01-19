@@ -217,6 +217,9 @@ setup_test_context() {
     # Inject API tokens from .env if available
     inject_api_tokens "$workdir"
 
+    # Generate paths.local.json for local repo scanning
+    generate_paths_local "$workdir"
+
     return 0
 }
 
@@ -262,6 +265,57 @@ inject_api_tokens() {
 EOF
         log_verbose "Created repos.json with Linear API token from .env"
     fi
+}
+
+# Generate paths.local.json for test fixtures
+# Detects mock-repo directories and creates path mappings
+generate_paths_local() {
+    local workdir="$1"
+    local repos_file="$workdir/.entourage/repos.json"
+    local paths_file="$workdir/.entourage/paths.local.json"
+
+    # Skip if no repos.json
+    if [[ ! -f "$repos_file" ]]; then
+        return 0
+    fi
+
+    # Skip if paths.local.json already exists
+    if [[ -f "$paths_file" ]]; then
+        return 0
+    fi
+
+    # Extract repo names from repos.json
+    local repo_names
+    repo_names=$(jq -r '.repos[]?.name // empty' "$repos_file" 2>/dev/null)
+
+    if [[ -z "$repo_names" ]]; then
+        return 0
+    fi
+
+    # Build paths.local.json by checking for directories
+    local paths_json="{"
+    local first=true
+
+    while IFS= read -r repo_name; do
+        # Check common fixture patterns
+        for path_pattern in "./$repo_name" "./mock-repo" "."; do
+            if [[ -d "$workdir/$path_pattern" ]]; then
+                if [[ "$first" == "true" ]]; then
+                    first=false
+                else
+                    paths_json+=","
+                fi
+                paths_json+="\"$repo_name\":\"$path_pattern\""
+                break
+            fi
+        done
+    done <<< "$repo_names"
+
+    paths_json+="}"
+
+    # Write paths.local.json
+    echo "$paths_json" | jq '.' > "$paths_file"
+    log_verbose "Generated paths.local.json: $paths_json"
 }
 
 # Execute a single test case

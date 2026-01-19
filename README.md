@@ -69,52 +69,75 @@ The `/local-repo-check`, `/github-repo-check`, `/linear-check`, and `/project-st
 
 1. Create a `.entourage/` directory in your working project (where you run Claude Code)
 
-2. Create `.entourage/repos.json` with your repository configuration:
+2. Create `.entourage/repos.json` with your shared repository configuration:
 
 ```json
 {
+  "_comment": "Shared config - safe to commit. Local paths go in paths.local.json, tokens in .env.local",
   "github": {
-    "token": "ghp_xxxxxxxxxxxx",
     "defaultOrg": "my-org"
   },
   "linear": {
-    "teamId": "TEAM",
+    "teamName": "TEAM",
     "workspace": "my-workspace"
   },
   "repos": [
     {
       "name": "my-web",
-      "path": "~/Documents/code/my-web",
       "mainBranch": "main",
       "github": "my-org/my-web"
     },
     {
       "name": "my-api",
-      "path": "~/Documents/code/my-api",
       "github": "my-org/my-api"
     }
   ]
 }
 ```
 
+3. Create `.entourage/paths.local.json` for your personal local paths (do not commit):
+
+```json
+{
+  "_comment": "Personal local paths - do not commit. Keys must match repo names in repos.json",
+  "my-web": "~/Documents/code/my-web",
+  "my-api": "~/Documents/code/my-api"
+}
+```
+
+4. Add to `.gitignore`:
+```
+.entourage/paths.local.json
+```
+
+**Why split configuration?**
+
+This separation allows teams to share project configuration (repo names, GitHub links, Linear settings) while each team member configures their own local filesystem paths.
+
+| File | Contains | Committed? |
+|------|----------|------------|
+| `repos.json` | GitHub repos, Linear team, repo names | Yes |
+| `paths.local.json` | Local filesystem paths | No |
+
 **Configuration fields:**
 
 Top-level `github` object (optional):
-- `token`: Personal access token (only needed if `gh` CLI is not installed)
 - `defaultOrg`: Default organization for repo lookups
 
 Top-level `linear` object (optional):
-- `teamId`: Linear team key (e.g., "ENG", "PROD")
+- `teamName`: Linear team identifier - accepts team name ("My Team"), team key ("TEAM"), or UUID
 - `workspace`: Linear workspace slug from your Linear URL
-- `token`: API token (only needed if Linear MCP is not configured)
 
-Per-repo fields:
+Per-repo fields in `repos.json`:
 - `name` (required): Display name for the repository
-- `path` (optional): Local filesystem path for local scanning (supports `~`)
 - `mainBranch` (optional): Primary branch name, defaults to "main"
 - `github` (optional): GitHub repo identifier in `owner/repo` format
 
-**What local scanning does (`path` configured):**
+Per-repo fields in `paths.local.json`:
+- Key: Must match `name` from `repos.json`
+- Value: Local filesystem path (supports `~`)
+
+**What local scanning does (`paths.local.json` configured):**
 - Searches repositories for files matching component names
 - Detects test files to verify implementation completeness
 - Checks git history for recent commits and feature branches
@@ -134,7 +157,46 @@ Per-repo fields:
 **Without configuration:**
 The skills still work but limit status to "Triage" (transcript evidence only).
 
-See `examples/repos.json.example` for a template.
+See `examples/repos.json.example` and `examples/paths.local.json.example` for templates.
+
+---
+
+## Authentication & Security
+
+### Preferred Authentication Order
+
+For all external services, the plugin follows this authentication hierarchy:
+
+| Priority | Method | Why Preferred |
+|----------|--------|---------------|
+| 1st | **MCP servers** | OAuth via browser, no stored tokens |
+| 2nd | **CLI tools** | Credentials in system keychain (gh, gcloud) |
+| 3rd | **Environment variables** | Tokens in `.env.local`, gitignored |
+
+This approach keeps secrets out of config files and version control.
+
+### Service-Specific Setup
+
+| Service | Preferred | Fallback |
+|---------|-----------|----------|
+| Linear | Linear MCP (`mcp.linear.app`) | `LINEAR_API_TOKEN` in `.env.local` |
+| GitHub | `gh` CLI (`gh auth login`) | `GITHUB_TOKEN` in `.env.local` |
+
+### Token Storage (When Needed)
+
+If MCP/CLI options aren't available, store tokens in `.env.local`:
+
+```bash
+# .env.local - NEVER commit this file
+LINEAR_API_TOKEN=lin_api_xxxxxxxxxxxx
+GITHUB_TOKEN=ghp_xxxxxxxxxxxx
+```
+
+Ensure `.env.local` is in your `.gitignore`:
+```
+.env.local
+.env*.local
+```
 
 ---
 
@@ -166,26 +228,22 @@ gh auth status
 gh api user/orgs --jq '.[].login'  # List your orgs
 ```
 
-### Option 2: Personal Access Token
+### Option 2: Environment Variable
 
-If `gh` CLI is unavailable, add a token to `.entourage/repos.json`:
+If `gh` CLI is unavailable, add a token to `.env.local`:
 
-```json
-{
-  "github": {
-    "token": "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-  },
-  "repos": [...]
-}
+```bash
+# .env.local - NEVER commit this file
+GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 **Generate a PAT:**
 1. Go to https://github.com/settings/tokens
 2. Click "Generate new token (classic)"
 3. Select scopes: `repo`, `read:org`, `workflow`
-4. Copy the token to your config
+4. Copy the token to `.env.local`
 
-**Important:** Add `.entourage/repos.json` to your `.gitignore` if it contains a token.
+See [Authentication & Security](#authentication--security) for more details.
 
 ---
 
@@ -259,21 +317,18 @@ Configure the Linear MCP server in `~/.claude.json` or project `.mcp.json`:
 
 This uses OAuth via browser - no token stored in config files.
 
-### Option 2: API Token
+### Option 2: Environment Variable
 
-If Linear MCP is unavailable, add a token to `.entourage/repos.json`:
+If Linear MCP is unavailable, add a token to `.env.local`:
 
-```json
-{
-  "linear": {
-    "token": "lin_api_xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-    "teamId": "TEAM",
-    "workspace": "my-workspace"
-  }
-}
+```bash
+# .env.local - NEVER commit this file
+LINEAR_API_TOKEN=lin_api_xxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 **Generate a token:** Go to https://linear.app/settings/api and create a Personal API Key.
+
+See [Authentication & Security](#authentication--security) for more details.
 
 ---
 

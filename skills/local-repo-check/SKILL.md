@@ -27,40 +27,59 @@ Component or feature name(s) to verify. Examples:
 
 Before scanning, look for repository configuration:
 
-### Step 1: Check for Config File
+### Step 1: Check for Config Files
 
-Use the Read tool to check if `.entourage/repos.json` exists in the current working directory.
+Use the Read tool to check if these files exist in the current working directory:
+- `.entourage/repos.json` - shared repo metadata (name, mainBranch, github)
+- `.entourage/paths.local.json` - personal local filesystem paths
 
-### Step 2: Parse Configuration
+### Step 2: Parse repos.json
 
 If the file exists, it contains a `repos` array. Each repo has:
 - `name`: Human-readable identifier
-- `path`: Local filesystem path (may contain `~`)
 - `mainBranch`: Branch name for "shipped" status (default: "main")
 
-Example config:
+Example `.entourage/repos.json`:
 ```json
 {
   "repos": [
     {
-      "name": "entourage-web",
-      "path": "~/Documents/code/entourage-web",
-      "mainBranch": "main"
+      "name": "my-web-app",
+      "mainBranch": "main",
+      "github": "my-org/my-web-app"
     }
   ]
 }
 ```
 
-### Step 3: Expand Paths
+### Step 3: Parse paths.local.json
+
+If the file exists, it contains a mapping of repo names to local paths:
+
+Example `.entourage/paths.local.json`:
+```json
+{
+  "my-web-app": "~/Documents/code/my-web-app"
+}
+```
+
+### Step 4: Merge Configurations
+
+For each repo in `repos.json`:
+1. Look up the path by repo `name` in `paths.local.json`
+2. If path not found: skip local scanning for this repo (report warning, continue with others)
+3. If path found: proceed with expansion and verification
+
+### Step 5: Expand Paths
 
 Replace `~` with the user's home directory using Bash:
 ```bash
 echo ~/path/to/repo
 ```
 
-### Step 4: Verify Access
+### Step 6: Verify Access
 
-For each repo, confirm the path exists:
+For each repo with a configured path, confirm the path exists:
 ```bash
 test -d "/expanded/path" && echo "exists" || echo "missing"
 ```

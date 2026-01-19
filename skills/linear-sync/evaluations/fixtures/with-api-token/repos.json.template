@@ -1,7 +1,6 @@
 {
-  "_comment": "Copy this file to .entourage/repos.json and replace placeholder values",
+  "_comment": "Copy to .entourage/repos.json. Put LINEAR_API_TOKEN in .env.local",
   "linear": {
-    "token": "YOUR_LINEAR_API_TOKEN_HERE",
     "teamId": "TEAM",
     "workspace": "your-workspace"
   }

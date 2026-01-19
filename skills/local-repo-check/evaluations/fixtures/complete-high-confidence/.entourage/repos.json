@@ -2,7 +2,6 @@
   "repos": [
     {
       "name": "mock-repo",
-      "path": "./mock-repo",
       "mainBranch": "main"
     }
   ]
