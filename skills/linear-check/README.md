@@ -63,7 +63,7 @@ This skill checks Linear for issue tracking evidence to determine component stat
    claude --plugin-dir .
 
    # Or specify the path
-   claude --plugin-dir ~/entourage-plugin
+   claude --plugin-dir ~/your-plugin
    ```
 
 3. Test directly:

@@ -1,6 +1,6 @@
 # Evaluation Test Suite
 
-This directory contains the evaluation infrastructure for entourage-plugin skills, following [Anthropic's agent evaluation methodology](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents).
+This directory contains the evaluation infrastructure for your-plugin skills, following [Anthropic's agent evaluation methodology](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents).
 
 ## Quick Start
 
@@ -187,6 +187,47 @@ Test cases in `evaluation.json`:
 | `EVAL_TIMEOUT` | `60` | Timeout per test case (seconds) |
 | `SKIP_CLAUDE` | `0` | Set to `1` to skip Claude execution |
 | `TRIALS_PER_CASE` | `1` | Number of trials for pass@k |
+
+---
+
+## Running Linear Skill Evaluations
+
+The `linear-check` and `linear-sync` skills require Linear API access for evaluation.
+
+### Configure API Token
+
+1. Copy `.env.example` to `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edit `.env` with your Linear credentials:
+   ```
+   LINEAR_API_TOKEN=lin_api_your_actual_token
+   LINEAR_TEAM_ID=TEAM        # Your team key (e.g., "ENG", "PROD")
+   LINEAR_WORKSPACE=my-workspace  # From your Linear URL
+   ```
+
+3. Generate a token at: https://linear.app/settings/api
+
+### Run Evaluations
+
+```bash
+# Run linear-check evaluations
+./tests/run.sh linear-check
+
+# Run linear-sync evaluations
+./tests/run.sh linear-sync
+
+# Both skills with verbose output
+./tests/run.sh linear-check linear-sync --verbose
+```
+
+The test runner automatically injects tokens from `.env` into test fixtures.
+
+### Why API Token Instead of MCP?
+
+MCP requires interactive OAuth approval which cannot happen in automated test subprocesses. The API token fallback enables automated testing while MCP remains the recommended approach for interactive use.
 
 ---
 
