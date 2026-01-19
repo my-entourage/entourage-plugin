@@ -244,14 +244,14 @@ Info: Local repo may be behind remote. Consider running `git pull`.
 **Query:** "What's the status of authentication?"
 
 ```
-## Status: Entourage
+## Status: My Project
 
 | Component | Status | Evidence | Source | Confidence |
 |-----------|--------|----------|--------|------------|
-| Clerk auth | Done | Tests passing, merged to main | entourage-web | High |
-| User dashboard | In Progress | ENT-123 In Progress, code exists | Linear + Local | High |
-| Email notifications | Todo | ENT-456 scheduled | Linear | High |
-| Payments | Backlog | ENT-789 in backlog | Linear | High |
+| Clerk auth | Done | Tests passing, merged to main | my-project | High |
+| User dashboard | In Progress | TEAM-123 In Progress, code exists | Linear + Local | High |
+| Email notifications | Todo | TEAM-456 scheduled | Linear | High |
+| Payments | Backlog | TEAM-789 in backlog | Linear | High |
 
 ### Notes
 - GitHub verification not configured. Add `github` field to repos for PR/CI/deployment status.

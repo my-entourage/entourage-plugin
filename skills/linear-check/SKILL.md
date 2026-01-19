@@ -46,11 +46,13 @@ Also ensure `.entourage/repos.json` has the team configuration:
 ```json
 {
   "linear": {
-    "teamId": "TEAM",
+    "teamName": "TEAM",
     "workspace": "my-workspace"
   }
 }
 ```
+
+**Note:** `teamName` accepts team name ("My Team"), team key ("TEAM"), or UUID.
 
 Use curl with the token for GraphQL queries:
 ```bash
@@ -98,8 +100,8 @@ Look for `linear` section in the config:
 {
   "linear": {
     "token": "lin_api_...",
-    "teamId": "ENT",
-    "workspace": "myentourage"
+    "teamName": "My Team",
+    "workspace": "my-workspace"
   }
 }
 ```
@@ -119,14 +121,24 @@ For each component/feature, run these queries:
 
 ### Using MCP (Preferred)
 
+**Resolve team identifier:**
+Before querying issues, resolve the configured `teamName` to a valid team:
+1. Call `list_teams` to get available teams
+2. Match configured `teamName` against team name, key, or UUID
+3. Use the matched team's `name` for all subsequent queries
+
+This allows users to configure any of: team key ("TEAM"), team name ("My Team"), or UUID.
+
+**Important:** The Linear MCP `team` parameter only accepts team **name** or **UUID**, not team keys. Always resolve keys via `list_teams` first.
+
 **Search issues by component name:**
-Use the `list_issues` MCP tool with the query parameter set to the component name and teamId from config.
+Use the `list_issues` MCP tool with the query parameter set to the component name and the resolved team name from config.
 
 **Get issue details:**
 Use the `get_issue` MCP tool with the issue ID.
 
 **Get team's workflow states:**
-Use the `list_issue_statuses` MCP tool with the teamId.
+Use the `list_issue_statuses` MCP tool with the resolved team name.
 
 ### Using API Token (Fallback)
 
@@ -245,9 +257,9 @@ If API returns rate limit error:
 ```
 
 ### Team Not Found
-If team ID is invalid:
+If team identifier is invalid:
 ```
-> Linear team not found. Check `teamId` in `.entourage/repos.json`.
+> Linear team not found. Check `teamName` in `.entourage/repos.json`.
 ```
 
 ---
@@ -261,15 +273,15 @@ If team ID is invalid:
 
 | Issue | Status | State | Assignee | Last Updated |
 |-------|--------|-------|----------|--------------|
-| ENT-123 | In Progress | In Progress | @user | 2025-01-10 |
+| TEAM-123 | In Progress | In Progress | @user | 2025-01-10 |
 
 ### Linear Details
 
-**ENT-123:** "Implement authentication flow"
+**TEAM-123:** "Implement authentication flow"
 - Status: In Progress
 - Assignee: @user
 - Updated: Jan 10, 2025
-- URL: https://linear.app/myentourage/issue/ENT-123
+- URL: https://linear.app/my-workspace/issue/TEAM-123
 ```
 
 ### Without Linear Configuration
@@ -284,8 +296,8 @@ No Linear configuration found. Either:
 {
   "linear": {
     "token": "lin_api_...",
-    "teamId": "ENT",
-    "workspace": "myentourage"
+    "teamName": "My Team",
+    "workspace": "my-workspace"
   }
 }
 ```
@@ -299,8 +311,8 @@ When checking multiple components, output a summary table followed by details:
 
 | Component | Status | Issue | State | Confidence |
 |-----------|--------|-------|-------|------------|
-| auth | In Progress | ENT-123 | In Progress | High |
-| dashboard | Backlog | ENT-456 | Backlog | High |
+| auth | In Progress | TEAM-123 | In Progress | High |
+| dashboard | Backlog | TEAM-456 | Backlog | High |
 | payments | Unknown | - | - | - |
 
 ### Details
@@ -321,16 +333,16 @@ When checking multiple components, output a summary table followed by details:
 
 | Issue | Status | State | Assignee | Last Updated |
 |-------|--------|-------|----------|--------------|
-| ENT-123 | In Progress | In Progress | @alice | 2025-01-10 |
+| TEAM-123 | In Progress | In Progress | @alice | 2025-01-10 |
 
 ### Linear Details
 
-**ENT-123:** "Implement Clerk authentication"
+**TEAM-123:** "Implement Clerk authentication"
 - Status: In Progress
 - State: In Progress (started)
 - Assignee: @alice
 - Updated: Jan 10, 2025
-- URL: https://linear.app/myentourage/issue/ENT-123
+- URL: https://linear.app/my-workspace/issue/TEAM-123
 ```
 
 ---
