@@ -34,12 +34,12 @@ The skill automatically applies when:
 
 1. Navigate to your context database:
    ```bash
-   cd ~/entourage-context   # or ~/viran-context
+   cd ~/my-context   # or ~/other-context
    ```
 
 2. Start Claude Code with the plugin:
    ```bash
-   claude --plugin-dir ~/entourage-plugin
+   claude --plugin-dir ~/your-plugin
    ```
 
 3. Ask questions that require factual verification:
@@ -88,8 +88,8 @@ Response should end with an evidence table:
 Test results are stored in the context database (not the plugin):
 
 ```
-~/entourage-context/evaluations/grounded-query/
-~/viran-context/evaluations/grounded-query/
+~/my-context/evaluations/grounded-query/
+~/other-context/evaluations/grounded-query/
 ```
 
 Each evaluation run produces a timestamped JSON log with pass/fail results for each test case.

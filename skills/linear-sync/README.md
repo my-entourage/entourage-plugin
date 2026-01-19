@@ -75,7 +75,7 @@ Requires Linear settings in `.entourage/repos.json`:
 ```
 | Component | Issue | Current | Proposed | Evidence |
 |-----------|-------|---------|----------|----------|
-| auth | ENT-123 | Backlog | In Progress | Feature branch |
+| auth | TEAM-123 | Backlog | In Progress | Feature branch |
 ```
 
 ### Results
@@ -83,7 +83,7 @@ Requires Linear settings in `.entourage/repos.json`:
 ## Updated (1)
 | Issue | Previous | New | Evidence |
 |-------|----------|-----|----------|
-| ENT-123 | Backlog | In Progress | Feature branch exists |
+| TEAM-123 | Backlog | In Progress | Feature branch exists |
 ```
 
 ## Related Skills
