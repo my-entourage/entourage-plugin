@@ -1,4 +1,4 @@
-# your-plugin
+# entourage-plugin
 
 Comprehensive Claude Code plugin for context management, verification, data import, and session tracking. Contains reusable skills that can be invoked with `/skill-name`.
 
@@ -9,39 +9,28 @@ Comprehensive Claude Code plugin for context management, verification, data impo
 Add the marketplace and install the plugin:
 
 ```bash
-/plugin marketplace add your-org/your-plugin
-/plugin install your-plugin@your-marketplace
+/plugin marketplace add my-entourage/entourage-plugin
+/plugin install entourage@my-entourage
 ```
 
 Or use the interactive menu:
 1. Run `/plugin`
-2. Select "Discover" > "your-marketplace"
-3. Select "your-plugin" to install
+2. Select "Discover" > "my-entourage"
+3. Select "entourage" to install
 
 ### Option 2: Local Plugin (For Development)
 
 Run Claude Code with the plugin directory:
 
 ```bash
-claude --plugin-dir ~/your-plugin
+claude --plugin-dir ~/entourage-plugin
 ```
 
 Add an alias to your shell config (`~/.zshrc` or `~/.bashrc`) for convenience:
 
 ```bash
-alias claude-plugin='claude --plugin-dir ~/your-plugin'
+alias claude-entourage='claude --plugin-dir ~/entourage-plugin'
 ```
-
-### Option 3: Project-Level Installation
-
-Install the plugin for a specific project:
-
-```bash
-cd /path/to/your/project
-claude plugin install your-plugin --source ~/your-plugin --scope project
-```
-
-This adds the plugin to `.claude/settings.json`, which can be committed to share with your team.
 
 ## Available Skills
 
@@ -54,6 +43,7 @@ This adds the plugin to `.claude/settings.json`, which can be committed to share
 | Local Repo Check | `/local-repo-check` | Scan local repositories for implementation evidence |
 | GitHub Repo Check | `/github-repo-check` | Query GitHub API for PRs, issues, Actions, deployments |
 | Linear Check | `/linear-check` | Query Linear API for issue tracking status |
+| Linear Sync | `/linear-sync` | Update Linear issues based on project-status evidence |
 
 ### Data Import Skills
 
@@ -214,7 +204,7 @@ gh api orgs/YOUR_ORG/repos --jq '.[].full_name'
 ## Keeping Skills Updated
 
 ```bash
-cd ~/your-plugin && git pull
+cd ~/entourage-plugin && git pull
 ```
 
 Then restart Claude Code to pick up the changes.
@@ -290,7 +280,7 @@ If Linear MCP is unavailable, add a token to `.entourage/repos.json`:
 ## Plugin Structure
 
 ```
-your-plugin/
+entourage-plugin/
 ├── .claude-plugin/
 │   ├── plugin.json          # Plugin manifest
 │   └── marketplace.json     # Marketplace listing
@@ -330,7 +320,7 @@ your-plugin/
 
 **Testing changes locally:**
 ```bash
-claude --plugin-dir ~/your-plugin
+claude --plugin-dir ~/entourage-plugin
 ```
 
 Type `/grounded-query` to verify the skill appears in autocomplete.
