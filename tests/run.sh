@@ -32,11 +32,23 @@ LIB_DIR="$SCRIPT_DIR/lib"
 # Source graders library
 source "$LIB_DIR/graders.sh"
 
+# Load .env file if it exists
+if [[ -f "$PLUGIN_DIR/.env" ]]; then
+    set -a
+    source "$PLUGIN_DIR/.env"
+    set +a
+fi
+
 # Configuration
 CLAUDE_CLI="${CLAUDE_CLI:-claude}"
 EVAL_TIMEOUT="${EVAL_TIMEOUT:-60}"
 SKIP_CLAUDE="${SKIP_CLAUDE:-0}"
 TRIALS_PER_CASE="${TRIALS_PER_CASE:-1}"
+
+# API tokens from environment
+LINEAR_API_TOKEN="${LINEAR_API_TOKEN:-}"
+LINEAR_TEAM_ID="${LINEAR_TEAM_ID:-}"
+LINEAR_WORKSPACE="${LINEAR_WORKSPACE:-}"
 
 # Detect timeout command (GNU coreutils vs macOS)
 if command -v gtimeout &> /dev/null; then
@@ -200,9 +212,56 @@ setup_test_context() {
         log_verbose "Loading fixtures from $fixture_dir"
         # Use /. to copy all contents including hidden files/directories
         cp -r "$fixture_dir"/. "$workdir/" 2>/dev/null || true
+    fi
+
+    # Inject API tokens from .env if available
+    inject_api_tokens "$workdir"
+
+    return 0
+}
+
+# Inject API tokens from environment into repos.json
+inject_api_tokens() {
+    local workdir="$1"
+
+    # Skip if no Linear token configured
+    if [[ -z "$LINEAR_API_TOKEN" ]]; then
         return 0
     fi
-    return 1
+
+    # Create .entourage directory if it doesn't exist
+    mkdir -p "$workdir/.entourage"
+
+    # Check if repos.json exists
+    local repos_file="$workdir/.entourage/repos.json"
+
+    if [[ -f "$repos_file" ]]; then
+        # Update existing file with token if it has a linear section
+        if jq -e '.linear' "$repos_file" > /dev/null 2>&1; then
+            local updated
+            updated=$(jq --arg token "$LINEAR_API_TOKEN" \
+                        --arg teamId "${LINEAR_TEAM_ID:-}" \
+                        --arg workspace "${LINEAR_WORKSPACE:-}" \
+                        '.linear.token = $token |
+                         if $teamId != "" then .linear.teamId = $teamId else . end |
+                         if $workspace != "" then .linear.workspace = $workspace else . end' \
+                        "$repos_file")
+            echo "$updated" > "$repos_file"
+            log_verbose "Injected Linear API token from .env"
+        fi
+    else
+        # Create new repos.json with Linear config
+        cat > "$repos_file" << EOF
+{
+  "linear": {
+    "token": "$LINEAR_API_TOKEN",
+    "teamId": "${LINEAR_TEAM_ID:-TEAM}",
+    "workspace": "${LINEAR_WORKSPACE:-my-workspace}"
+  }
+}
+EOF
+        log_verbose "Created repos.json with Linear API token from .env"
+    fi
 }
 
 # Execute a single test case
