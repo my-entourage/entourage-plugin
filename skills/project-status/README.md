@@ -57,12 +57,12 @@ This skill provides accurate project status by distinguishing between what was d
 
 1. Navigate to your context database:
    ```bash
-   cd ~/entourage-context   # or ~/viran-context
+   cd ~/my-context   # or ~/other-context
    ```
 
 2. Start Claude Code with the plugin:
    ```bash
-   claude --plugin-dir ~/entourage-plugin
+   claude --plugin-dir ~/your-plugin
    ```
 
 3. Test individual cases:
@@ -94,8 +94,8 @@ Example:
 | Component | Status | Evidence | Source | Confidence |
 |-----------|--------|----------|--------|------------|
 | Auth | Shipped | PR #42 merged, deployed | GitHub | Very High |
-| Dashboard | In Progress | ENT-123 In Progress, code exists | Linear + Local | High |
-| Payments | Todo | ENT-456 scheduled | Linear | High |
+| Dashboard | In Progress | TEAM-123 In Progress, code exists | Linear + Local | High |
+| Payments | Todo | TEAM-456 scheduled | Linear | High |
 | Analytics | Triage | Mentioned Dec 21 meeting | Transcripts | Medium |
 ```
 
@@ -104,8 +104,8 @@ Example:
 Test results are stored in the context database (not the plugin):
 
 ```
-~/entourage-context/evaluations/project-status/
-~/viran-context/evaluations/project-status/
+~/my-context/evaluations/project-status/
+~/other-context/evaluations/project-status/
 ```
 
 Each evaluation run produces a timestamped JSON log with pass/fail results for each test case.

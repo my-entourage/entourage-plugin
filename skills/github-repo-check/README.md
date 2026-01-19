@@ -55,12 +55,12 @@ This skill checks GitHub for remote evidence to determine component status. It q
 
 1. Navigate to your context database:
    ```bash
-   cd ~/entourage-context   # or ~/viran-context
+   cd ~/my-context   # or ~/other-context
    ```
 
 2. Start Claude Code with the plugin:
    ```bash
-   claude --plugin-dir ~/entourage-plugin
+   claude --plugin-dir ~/your-plugin
    ```
 
 3. Test directly:
@@ -121,8 +121,8 @@ The skill prefers `gh` CLI for authentication. If unavailable, falls back to tok
 This skill is typically invoked by `/project-status`. Evaluation logs are stored with project-status results:
 
 ```
-~/entourage-context/evaluations/project-status/
-~/viran-context/evaluations/project-status/
+~/my-context/evaluations/project-status/
+~/other-context/evaluations/project-status/
 ```
 
 ## Test Cases
