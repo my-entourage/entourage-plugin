@@ -46,7 +46,7 @@ Also ensure `.entourage/repos.json` has the team configuration:
 ```json
 {
   "linear": {
-    "teamName": "TEAM",
+    "teamName": "Team",
     "workspace": "my-workspace"
   }
 }

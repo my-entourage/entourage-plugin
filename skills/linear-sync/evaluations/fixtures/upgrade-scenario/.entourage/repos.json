@@ -7,7 +7,7 @@
     }
   ],
   "linear": {
-    "teamId": "TEAM",
+    "teamName": "TEAM",
     "workspace": "my-workspace"
   }
 }

@@ -237,7 +237,7 @@ Read Linear settings from `.entourage/repos.json`:
 ```json
 {
   "linear": {
-    "teamName": "TEAM",
+    "teamName": "Team",
     "workspace": "my-workspace"
   }
 }
