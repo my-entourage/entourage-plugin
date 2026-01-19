@@ -6,7 +6,6 @@
   "repos": [
     {
       "name": "my-project",
-      "path": ".",
       "github": "my-org/my-project"
     }
   ]

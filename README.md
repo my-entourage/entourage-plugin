@@ -69,11 +69,11 @@ The `/local-repo-check`, `/github-repo-check`, `/linear-check`, and `/project-st
 
 1. Create a `.entourage/` directory in your working project (where you run Claude Code)
 
-2. Create `.entourage/repos.json` with your repository configuration:
+2. Create `.entourage/repos.json` with your shared repository configuration:
 
 ```json
 {
-  "_comment": "This file can be committed - no secrets. Tokens go in .env.local",
+  "_comment": "Shared config - safe to commit. Local paths go in paths.local.json, tokens in .env.local",
   "github": {
     "defaultOrg": "my-org"
   },
@@ -84,18 +84,40 @@ The `/local-repo-check`, `/github-repo-check`, `/linear-check`, and `/project-st
   "repos": [
     {
       "name": "my-web",
-      "path": "~/Documents/code/my-web",
       "mainBranch": "main",
       "github": "my-org/my-web"
     },
     {
       "name": "my-api",
-      "path": "~/Documents/code/my-api",
       "github": "my-org/my-api"
     }
   ]
 }
 ```
+
+3. Create `.entourage/paths.local.json` for your personal local paths (do not commit):
+
+```json
+{
+  "_comment": "Personal local paths - do not commit. Keys must match repo names in repos.json",
+  "my-web": "~/Documents/code/my-web",
+  "my-api": "~/Documents/code/my-api"
+}
+```
+
+4. Add to `.gitignore`:
+```
+.entourage/paths.local.json
+```
+
+**Why split configuration?**
+
+This separation allows teams to share project configuration (repo names, GitHub links, Linear settings) while each team member configures their own local filesystem paths.
+
+| File | Contains | Committed? |
+|------|----------|------------|
+| `repos.json` | GitHub repos, Linear team, repo names | Yes |
+| `paths.local.json` | Local filesystem paths | No |
 
 **Configuration fields:**
 
@@ -106,13 +128,16 @@ Top-level `linear` object (optional):
 - `teamId`: Linear team key (e.g., "ENG", "PROD")
 - `workspace`: Linear workspace slug from your Linear URL
 
-Per-repo fields:
+Per-repo fields in `repos.json`:
 - `name` (required): Display name for the repository
-- `path` (optional): Local filesystem path for local scanning (supports `~`)
 - `mainBranch` (optional): Primary branch name, defaults to "main"
 - `github` (optional): GitHub repo identifier in `owner/repo` format
 
-**What local scanning does (`path` configured):**
+Per-repo fields in `paths.local.json`:
+- Key: Must match `name` from `repos.json`
+- Value: Local filesystem path (supports `~`)
+
+**What local scanning does (`paths.local.json` configured):**
 - Searches repositories for files matching component names
 - Detects test files to verify implementation completeness
 - Checks git history for recent commits and feature branches
@@ -132,7 +157,7 @@ Per-repo fields:
 **Without configuration:**
 The skills still work but limit status to "Triage" (transcript evidence only).
 
-See `examples/repos.json.example` for a template.
+See `examples/repos.json.example` and `examples/paths.local.json.example` for templates.
 
 ---
 

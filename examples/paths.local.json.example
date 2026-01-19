@@ -1,0 +1,5 @@
+{
+  "_comment": "Personal local paths - do not commit. Keys must match repo names in repos.json",
+  "my-web-app": "~/code/my-web-app",
+  "my-api": "~/Documents/projects/my-api"
+}
