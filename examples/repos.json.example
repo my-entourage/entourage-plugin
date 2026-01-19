@@ -4,7 +4,7 @@
     "defaultOrg": "my-org"
   },
   "linear": {
-    "teamId": "TEAM",
+    "teamName": "My Team",
     "workspace": "my-workspace"
   },
   "repos": [

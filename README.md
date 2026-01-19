@@ -78,7 +78,7 @@ The `/local-repo-check`, `/github-repo-check`, `/linear-check`, and `/project-st
     "defaultOrg": "my-org"
   },
   "linear": {
-    "teamId": "TEAM",
+    "teamName": "TEAM",
     "workspace": "my-workspace"
   },
   "repos": [
@@ -125,7 +125,7 @@ Top-level `github` object (optional):
 - `defaultOrg`: Default organization for repo lookups
 
 Top-level `linear` object (optional):
-- `teamId`: Linear team key (e.g., "ENG", "PROD")
+- `teamName`: Linear team identifier - accepts team name ("My Team"), team key ("TEAM"), or UUID
 - `workspace`: Linear workspace slug from your Linear URL
 
 Per-repo fields in `repos.json`:
