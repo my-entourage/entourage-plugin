@@ -32,12 +32,47 @@ Repository configuration in `.entourage/repos.json`:
   "repos": [
     {
       "name": "my-project",
-      "path": "~/code/my-project",
+      "github": "my-org/my-project",
       "mainBranch": "main"
     }
   ]
 }
 ```
+
+Optional path mapping in `.entourage/paths.local.json` (gitignored):
+
+```json
+{
+  "my-project": "~/code/my-project"
+}
+```
+
+## Auto-Discovery
+
+When `paths.local.json` is missing or incomplete, the skill automatically discovers repository paths using git remote URL matching.
+
+### How It Works
+
+1. **Reads `repos.json`** to get the list of repos with their `github` fields (e.g., `"my-org/my-project"`)
+2. **Scans common locations** for git repositories:
+   - Sibling directories (`../*/`)
+   - `~/code/*`, `~/dev/*`, `~/projects/*`, `~/src/*`
+3. **Matches by git remote** - compares each directory's `origin` remote URL against the expected GitHub path
+4. **Offers to save** discovered paths to `paths.local.json` for faster future scans
+
+### Why Git Remote Matching?
+
+Unlike directory name matching, git remote validation:
+- Works when repos are cloned with different names
+- Distinguishes forks from originals
+- Never confuses similarly-named but unrelated repos
+
+### Performance
+
+- **With paths.local.json**: ~100ms (just file reads)
+- **With auto-discovery**: ~1 second (filesystem scan + git checks)
+
+To optimize repeated scans, save discovered paths when prompted.
 
 ## Testing the Skill
 

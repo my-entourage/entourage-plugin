@@ -180,6 +180,58 @@
           "Could not access git history"
         ]
       }
+    },
+    {
+      "id": "auto-discovery",
+      "name": "Auto-discovery finds repos without paths.local.json",
+      "input": "/local-repo-check Auth",
+      "status": "pending",
+      "pendingReason": "Requires git repo with configured remote - manual test with scripts/discover-repos.sh",
+      "setup": {
+        "description": "repos.json has github field but no paths.local.json exists. A sibling directory contains a git repo with matching origin remote.",
+        "config": {
+          "repos": [
+            {
+              "name": "discovered-repo",
+              "github": "my-org/discovered-repo",
+              "mainBranch": "main"
+            }
+          ]
+        },
+        "manualSetup": [
+          "Create sibling directory ../discovered-repo",
+          "git init ../discovered-repo",
+          "git -C ../discovered-repo remote add origin git@github.com:my-org/discovered-repo.git",
+          "Add Auth.tsx to ../discovered-repo/src/"
+        ]
+      },
+      "expectedBehavior": "Discovers repo via git remote matching and finds Auth component",
+      "expectedOutput": {
+        "contains": [
+          "discovered-repo",
+          "Auth"
+        ],
+        "notContains": [
+          "No repository configuration found"
+        ]
+      }
+    },
+    {
+      "id": "auto-discovery-prompt-save",
+      "name": "Auto-discovery offers to save paths",
+      "input": "/local-repo-check Component",
+      "status": "pending",
+      "pendingReason": "Requires interactive prompt testing",
+      "setup": {
+        "description": "After successful discovery, skill should offer to save paths to paths.local.json"
+      },
+      "expectedBehavior": "Prompts user to save discovered paths for faster future scans",
+      "expectedOutput": {
+        "contains": [
+          "Save to",
+          "paths.local.json"
+        ]
+      }
     }
   ]
 }
