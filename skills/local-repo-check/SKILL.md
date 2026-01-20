@@ -67,17 +67,46 @@ Example `.entourage/paths.local.json`:
 
 For each repo in `repos.json`:
 1. Look up the path by repo `name` in `paths.local.json`
-2. If path not found: skip local scanning for this repo (report warning, continue with others)
-3. If path found: proceed with expansion and verification
+2. If path found: proceed with expansion and verification
+3. If path not found: mark as needing discovery
 
-### Step 5: Expand Paths
+### Step 5: Auto-Discovery (Fallback)
+
+**Only run this step if some repos are missing paths.**
+
+For repos without configured paths, use the discovery script to find them:
+
+```bash
+echo '{"repos":[{"name":"repo-name","github":"org/repo"}]}' | /path/to/plugin/scripts/discover-repos.sh
+```
+
+The script searches:
+- Sibling directories (`../*/`)
+- Common locations: `~/code/*`, `~/dev/*`, `~/projects/*`, `~/src/*`
+
+**Matching:** Uses git remote URL validation (not directory name), so it correctly identifies repos even if cloned with different names.
+
+**If repos are discovered:**
+1. Use the discovered paths for scanning
+2. After completing the scan, offer to save the discovered paths:
+   ```
+   Discovered local paths for: repo-a, repo-b
+   Save to .entourage/paths.local.json? [y/N]
+   ```
+3. If user confirms, write paths.local.json (creates if needed, merges with existing)
+
+**If repos cannot be found:**
+- Report: "Repository 'name' not found locally. Clone from github.com/org/repo or configure path in .entourage/paths.local.json"
+- Continue with other repos
+
+### Step 6: Expand Paths
 
 Replace `~` with the user's home directory using Bash:
 ```bash
 echo ~/path/to/repo
 ```
 
-### Step 6: Verify Access
+### Step 7: Verify Access
 
 For each repo with a configured path, confirm the path exists:
 ```bash
