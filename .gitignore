@@ -17,3 +17,7 @@ skills/*/integration/fixtures/local-*
 
 # User's personal thoughts directory
 thoughts/
+thoughts/conversations_claude
+
+# Sensitive folders
+.claude/sessions/
