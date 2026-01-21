@@ -25,15 +25,15 @@ Supports two config locations (checked in order):
   "spaces": {
     "viran": {
       "targetPath": "~/Documents/code/@orgs/viranhq/viran-context",
-      "rawExportPath": "data/notion/_exports",
-      "outputPath": "data/notion",
+      "rawExportPath": "temp/notion-raw",
+      "outputPath": "data/documents/notion",
       "apiKeyEnvVar": "NOTION_API_KEY_VIRAN",
       "excludePatterns": ["^Archived", "^Trash"]
     },
     "entourage": {
       "targetPath": "~/Documents/code/@orgs/my-entourage/entourage-context",
-      "rawExportPath": "data/notion/_exports",
-      "outputPath": "data/notion",
+      "rawExportPath": "temp/notion-raw",
+      "outputPath": "data/documents/notion",
       "apiKeyEnvVar": "NOTION_API_KEY_ENTOURAGE"
     }
   }
@@ -47,8 +47,8 @@ Supports two config locations (checked in order):
 {
   "apiKeyEnvVar": "NOTION_API_KEY_PROJECTNAME",
   "targetPath": ".",
-  "rawExportPath": "data/notion/_exports",
-  "outputPath": "data/notion",
+  "rawExportPath": "temp/notion-raw",
+  "outputPath": "data/documents/notion",
   "excludePatterns": ["Archive", "Template"]
 }
 ```
@@ -117,7 +117,7 @@ Exported from Notion:
 Converted to Markdown:
 - Files created: 45
 - Assets downloaded: 15
-- Location: data/notion/
+- Location: data/documents/notion/
 
 Run `/update-timeline` to process these files.
 ```
@@ -125,10 +125,7 @@ Run `/update-timeline` to process these files.
 ## Output Structure
 
 ```
-data/notion/
-├── _exports/
-│   └── 2026-01-15/
-│       └── export.json          # Raw API response
+data/documents/notion/
 ├── _assets/
 │   ├── logo.png
 │   └── diagram.svg
@@ -138,6 +135,10 @@ data/notion/
 │       └── Feature-A.md
 └── Team/
     └── Meeting-Notes.md
+
+temp/notion-raw/
+└── 2026-01-15/
+    └── export.json          # Raw API response (not tracked in git)
 ```
 
 - Folder structure mirrors Notion hierarchy
